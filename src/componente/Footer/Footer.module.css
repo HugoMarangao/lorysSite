@@ -1,0 +1,77 @@
+.footer {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #777;
+  }
+  
+  .socialSection {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .socialIcons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+    
+  }
+  
+  .linksSection {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  
+  .linksSection div {
+    margin: 10px;
+    flex: 1;
+    min-width: 150px;
+  }
+  
+  .linksSection h3 {
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+  
+  .linksSection ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .linksSection ul li {
+    margin-bottom: 5px;
+    cursor: pointer;
+  }
+  
+  .bottomSection {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  
+  .paymentSection, .securitySection, .appSection {
+    text-align: center;
+    margin: 15px;
+    flex: 1;
+    min-width: 200px;
+  }
+  
+  .paymentIcons, .securityIcons, .appIcons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+  }
+  
+  .companyInfo {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 12px;
+    color: #777;
+  }
+  
