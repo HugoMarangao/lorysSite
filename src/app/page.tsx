@@ -10,7 +10,6 @@ import Footer from '@/componente/Footer/Footer';
 const Page: React.FC = () => {
   return (
     <div style={{background: "#f5f5f5", maxWidth:1780,alignItems:'center',justifyContent:'center'}}>
-      <h1>teste</h1>
       <Header />
       <main>
         <BannerPrincipal/>

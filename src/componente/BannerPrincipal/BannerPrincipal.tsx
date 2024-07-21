@@ -3,8 +3,8 @@
 import React from 'react';
 import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
-import styled from 'styled-components';
 import Image from 'next/image';
+import styled from 'styled-components';
 
 const SliderContainer = styled.div`
   max-width: 100%;
