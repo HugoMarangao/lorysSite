@@ -5,6 +5,7 @@ import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
 import styled from 'styled-components';
 import Image from 'next/image';
+import Link from 'next/link';
 import { products } from './prducts';
 
 const SliderContainer = styled.div`
@@ -33,11 +34,11 @@ const ProductContainer = styled.div`
 `;
 
 const ProductImage = styled(Image)`
-border-radius: 10px;
-margin-bottom: 10px;
-width: 500px;
-height: 350px;
-object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  width: 500px;
+  height: 350px;
+  object-fit: cover;
 `;
 
 const ProductName = styled.div`
@@ -48,9 +49,9 @@ const ProductName = styled.div`
   color: #333;
 `;
 
-const ProductPrice = styled.div<{ hasDiscount: boolean }>`
+const ProductPrice = styled.div<{ $hasDiscount: boolean }>`
   font-size: 24px;
-  color: ${({ hasDiscount }) => (hasDiscount ? '#ff5252' : '#333')};
+  color: ${({ $hasDiscount }) => ($hasDiscount ? '#ff5252' : '#333')};
   font-weight: bold;
   margin-right: 5px;
 `;
@@ -133,25 +134,27 @@ const ProductCarousel: React.FC = () => {
             {product.discount && (
               <DiscountBadge>
                 {`-${Math.round(
-                  ((parseFloat(product.discount) - parseFloat(product.price.replace(/[^0-9,]/g, '').replace(',', '.'))) /
-                    parseFloat(product.discount)) *
+                  ((parseFloat(product.discount.replace(/[^0-9,]/g, '').replace(',', '.')) - parseFloat(product.price.replace(/[^0-9,]/g, '').replace(',', '.'))) /
+                    parseFloat(product.discount.replace(/[^0-9,]/g, '').replace(',', '.'))) *
                     100
                 )}%`}
               </DiscountBadge>
             )}
-            <ProductContainer>
-              <ProductImage src={product.image} alt={product.name} width={500} height={350} />
-              <PriceContainer>
-                <ProductPrice hasDiscount={!!product.discount}>{product.price}</ProductPrice>
-                {product.discount && <ProductDiscount>{product.discount}</ProductDiscount>}
-              </PriceContainer>
-              <ProductName>{product.name}</ProductName>
-              <ColorDots>
-                {product.colors.map((color) => (
-                  <Dot key={color} color={color} />
-                ))}
-              </ColorDots>
-            </ProductContainer>
+            <Link href={`/produtos/${product.id}`} passHref legacyBehavior>
+              <ProductContainer>
+                <ProductImage src={product.images[0]} alt={product.name} width={500} height={350} />
+                <PriceContainer>
+                  <ProductPrice $hasDiscount={!!product.discount}>{product.price}</ProductPrice>
+                  {product.discount && <ProductDiscount>{product.discount}</ProductDiscount>}
+                </PriceContainer>
+                <ProductName>{product.name}</ProductName>
+                <ColorDots>
+                  {product.colors.map((color, index) => (
+                    <Dot key={index} color={color.color} />
+                  ))}
+                </ColorDots>
+              </ProductContainer>
+            </Link>
           </ProductWrapper>
         ))}
       </Carousel>

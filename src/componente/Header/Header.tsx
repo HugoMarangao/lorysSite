@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import styles from './Header.module.css';
 import { FiUser, FiHeart, FiShoppingBag, FiSearch, FiMenu } from 'react-icons/fi';
+import Link from 'next/link';
 
 const Header: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,7 +55,11 @@ const Header: React.FC = () => {
           )}
         </div>
         <div className={styles.icons}>
-          <button className={styles.iconButton}><FiUser /></button>
+          <Link href="/login">
+            <button className={styles.iconButton}>
+              <FiUser />
+            </button>
+          </Link>
           <button className={styles.iconButton}><FiHeart /></button>
           <button className={styles.iconButton}><FiShoppingBag /></button>
         </div>
