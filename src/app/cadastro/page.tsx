@@ -9,6 +9,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import HeaderSecudaria from '@/componente/Header/HeaderSecundaria/Header';
 import Footer from '@/componente/Footer/Footer';
+import Image from 'next/image';
 
 const Cadastro: React.FC = () => {
   const [nome, setNome] = useState('');
@@ -29,6 +30,7 @@ const Cadastro: React.FC = () => {
   const [cepError, setCepError] = useState('');
   const [showAddressFields, setShowAddressFields] = useState(false);
   const [error, setError] = useState('');
+  const router = useRouter();
 
   const handleCadastro = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +39,6 @@ const Cadastro: React.FC = () => {
       console.log('Tentando criar usuário com email:', email);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      const router = useRouter();
       console.log('Usuário criado com sucesso:', user.uid);
       await setDoc(doc(db, 'users', user.uid), {
         nome,
@@ -59,8 +60,8 @@ const Cadastro: React.FC = () => {
       router.push('/');
       alert('Cadastro realizado com sucesso!');
     } catch (err) {
-      console.error('Erro ao cadastrar:', err.message);
-      setError('Erro ao cadastrar: ' + err.message);
+      console.error('Erro ao cadastrar:', err);
+      setError('Erro ao cadastrar: ' + err);
     }
   };
 
@@ -130,8 +131,13 @@ const Cadastro: React.FC = () => {
       <Container>
         <CadastroContainer>
           <ImageContainer>
-            <img src="/images/Banner/banner3.png" alt="Moda pra gente" />
-          </ImageContainer>
+            <Image
+              src="/images/Banner/banner3.png"
+              alt="Logo"
+              width={200}
+              height={100}
+              
+            />          </ImageContainer>
           <FormContainer>
             <Title>Novo Cadastro</Title>
             <Form onSubmit={handleCadastro}>
@@ -139,7 +145,7 @@ const Cadastro: React.FC = () => {
                 <Input
                   type="text"
                   value={nome}
-                  onChange={(e) => setNome(e.target.value)}
+                  onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setNome(e.target.value)}
                   required
                   placeholder=" "
                 />
@@ -169,7 +175,7 @@ const Cadastro: React.FC = () => {
                 <Input
                   type="text"
                   value={telefone}
-                  onChange={(e) => setTelefone(e.target.value)}
+                  onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setTelefone(e.target.value)}
                   required
                   placeholder=" "
                 />
@@ -179,7 +185,7 @@ const Cadastro: React.FC = () => {
                 <Input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setEmail(e.target.value)}
                   required
                   placeholder=" "
                 />
@@ -190,7 +196,7 @@ const Cadastro: React.FC = () => {
                   <Input
                     type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setPassword(e.target.value)}
                     required
                     placeholder=" "
                   />
@@ -219,7 +225,7 @@ const Cadastro: React.FC = () => {
                     <Input
                       type="text"
                       value={logradouro}
-                      onChange={(e) => setLogradouro(e.target.value)}
+                      onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setLogradouro(e.target.value)}
                       required
                       placeholder=" "
                       disabled
@@ -230,7 +236,7 @@ const Cadastro: React.FC = () => {
                     <Input
                       type="text"
                       value={bairro}
-                      onChange={(e) => setBairro(e.target.value)}
+                      onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setBairro(e.target.value)}
                       required
                       placeholder=" "
                       disabled
@@ -241,7 +247,7 @@ const Cadastro: React.FC = () => {
                     <Input
                       type="text"
                       value={cidade}
-                      onChange={(e) => setCidade(e.target.value)}
+                      onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setCidade(e.target.value)}
                       required
                       placeholder=" "
                       disabled
@@ -252,7 +258,7 @@ const Cadastro: React.FC = () => {
                     <Input
                       type="text"
                       value={uf}
-                      onChange={(e) => setUf(e.target.value)}
+                      onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setUf(e.target.value)}
                       required
                       placeholder=" "
                       disabled
@@ -263,7 +269,7 @@ const Cadastro: React.FC = () => {
                     <Input
                       type="text"
                       value={numero}
-                      onChange={(e) => setNumero(e.target.value)}
+                      onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setNumero(e.target.value)}
                       required
                       placeholder=" "
                     />
@@ -299,6 +305,7 @@ const Cadastro: React.FC = () => {
 };
 
 export default Cadastro;
+
 // Styled Components
 const Container = styled.div`
   display: flex;
@@ -308,10 +315,7 @@ const Container = styled.div`
   height: 100vh;
   background-color: #f5f5f5;
   color: #000;
-
-  
 `;
-
 
 const CadastroContainer = styled.div`
   display: flex;

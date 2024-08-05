@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import styles from './Header.module.css';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const HeaderSecudaria: React.FC = () => {
   
@@ -13,7 +14,13 @@ const HeaderSecudaria: React.FC = () => {
       <div className={styles.headerMiddle}>
         <div className={styles.logo}>
           <Link href="/">
-            <img src="/images/logo.png" alt="Logo" />
+            <Image
+                src="/images/logo.png"
+                alt="Logo"
+                width={200}
+                height={100}
+                className={styles.logo}
+              />
           </Link>
         </div>
           

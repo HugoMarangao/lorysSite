@@ -6,6 +6,7 @@ import { FiUser, FiHeart, FiShoppingBag, FiSearch, FiMenu } from 'react-icons/fi
 import Link from 'next/link';
 import { useAuth } from '../../Configuracao/Context/AuthContext';
 import { useCart } from '../../Configuracao/Context/CartContext';
+import Image from 'next/image';
 
 const Header: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,7 +60,13 @@ const Header: React.FC = () => {
       <div className={styles.headerMiddle}>
         <div className={styles.logo}>
           <Link href="/">
-            <img src="/images/logo.png" alt="Logo" />
+          <Image
+              src="/images/logo.png"
+              alt="Logo"
+              width={200}
+              height={100}
+              className={styles.logo}
+            />
           </Link>
         </div>
         <div className={styles.searchContainer}>

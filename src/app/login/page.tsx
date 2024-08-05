@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import HeaderSecudaria from '@/componente/Header/HeaderSecundaria/Header';
 import Footer from '@/componente/Footer/Footer';
+import Image from 'next/image';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -52,7 +53,14 @@ const Login: React.FC = () => {
       <Container>
         <LoginContainer>
           <ImageContainer>
-            <img src="/images/Banner/banner3.png" alt="Moda pra gente" />
+            
+            <Image
+              src="/images/Banner/banner3.png"
+              alt="Logo"
+              width={200}
+              height={100}
+              
+            />
           </ImageContainer>
           <FormContainer>
             <Title>Olá, acesse sua conta!</Title>
