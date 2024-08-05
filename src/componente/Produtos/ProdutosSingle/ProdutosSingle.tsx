@@ -4,7 +4,8 @@
 import styled from 'styled-components';
 import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
-import ProductCarousel from '../ProdutosCarousel';
+import { useEffect } from 'react';
+import { useCart } from '../../../Configuracao/Context/CartContext';
 
 type ProductDetailsProps = {
   product: {
@@ -21,6 +22,15 @@ type ProductDetailsProps = {
 
 const ProductDetails = ({ product }: ProductDetailsProps) => {
   const { images, sizes, colors, name, price, discount, description } = product;
+  const { addToCart } = useCart();
+
+  const handleAddToCart = () => {
+    addToCart(product);
+  };
+
+  useEffect(() => {
+    console.log("Produto carregado:", product);
+  }, [product]);
 
   return (
     <Container>
@@ -46,12 +56,15 @@ const ProductDetails = ({ product }: ProductDetailsProps) => {
           <ProductColors>
             <ColorTitle>Cores Disponíveis:</ColorTitle>
             <Colors>
-              {colors.map((color, index) => (
-                <ColorOption key={index}>
-                  <img src={color.image} alt={color.name} />
-                  <ColorName>{color.name}</ColorName>
-                </ColorOption>
-              ))}
+              {colors.map((color, index) => {
+                console.log(`Cor ${index}:`, color.image);  // Adicione este console para verificar o que está retornando
+                return (
+                  <ColorOption key={index}>
+                    <img src={color.image} alt={color.name} />
+                    <ColorName>{color.name}</ColorName>
+                  </ColorOption>
+                );
+              })}
             </Colors>
           </ProductColors>
           <ProductSizes>
@@ -62,11 +75,10 @@ const ProductDetails = ({ product }: ProductDetailsProps) => {
               ))}
             </Sizes>
           </ProductSizes>
-          <BuyButton>Comprar</BuyButton>
+          <BuyButton onClick={handleAddToCart}>Comprar</BuyButton>
           <ProductDescription>{description}</ProductDescription>
         </DetailsContainer>
       </ProductWrapper>
-      <ProductCarousel/>
     </Container>
   );
 };
@@ -80,7 +92,6 @@ const Container = styled.div`
   flex-direction: column;
   padding: 20px;
   margin: auto;
-  
   background-color: #f5f5f5;
   color: #666;
 `;

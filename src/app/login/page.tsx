@@ -1,4 +1,3 @@
-// src/app/login/page.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -7,74 +6,100 @@ import { auth } from '../../Configuracao/Firebase/firebaseConf';
 import styled from 'styled-components';
 import { useRouter } from 'next/navigation';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
+import HeaderSecudaria from '@/componente/Header/HeaderSecundaria/Header';
+import Footer from '@/componente/Footer/Footer';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setEmailError('');
+    setPasswordError('');
     setError('');
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push('/');
-    } catch (err) {
-      setError('Email ou senha incorretos');
+
+    if (!email) {
+      setEmailError('Campo obrigatório');
+    }
+
+    if (!password) {
+      setPasswordError('Campo obrigatório');
+    }
+
+    if (email && password) {
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        router.push('/');
+      } catch (err) {
+        setError('Usuário não existe');
+      }
     }
   };
 
+  const handleCadastroClick = () => {
+    router.push('/cadastro');
+  };
+
   return (
-    <Container>
-      <LoginContainer>
-        <ImageContainer>
-          <img src="/images/login-image.png" alt="Moda pra gente" />
-        </ImageContainer>
-        <FormContainer>
-          <Title>Olá, acesse sua conta!</Title>
-          <Form onSubmit={handleLogin}>
-            <InputContainer>
-              <Label>E-mail ou CPF</Label>
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </InputContainer>
-            <InputContainer>
-              <Label>Senha</Label>
-              <PasswordInput>
+    <>
+      <HeaderSecudaria />
+      <Container>
+        <LoginContainer>
+          <ImageContainer>
+            <img src="/images/Banner/banner3.png" alt="Moda pra gente" />
+          </ImageContainer>
+          <FormContainer>
+            <Title>Olá, acesse sua conta!</Title>
+            <Form onSubmit={handleLogin}>
+              <InputContainer>
                 <Input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  type="email"
+                  value={email}
+                  onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setEmail(e.target.value)}
                   required
+                  placeholder=" " // Adicione um espaço para garantir que o placeholder funcione corretamente
                 />
-                <PasswordToggle onClick={() => setShowPassword(!showPassword)}>
-                  {showPassword ? <FiEyeOff /> : <FiEye />}
-                </PasswordToggle>
-              </PasswordInput>
+                <Label>Email ou CPF</Label>
+                {emailError && <ErrorMessage>{emailError}</ErrorMessage>}
+              </InputContainer>
+              <InputContainer>
+                <PasswordInput>
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setPassword(e.target.value)}
+                    required
+                    placeholder=" " // Adicione um espaço para garantir que o placeholder funcione corretamente
+                  />
+                  <Label>Senha</Label>
+                  <PasswordToggle onClick={() => setShowPassword(!showPassword)}>
+                    {showPassword ? <FiEyeOff /> : <FiEye />}
+                  </PasswordToggle>
+                </PasswordInput>
+                {passwordError && <ErrorMessage>{passwordError}</ErrorMessage>}
+              </InputContainer>
               {error && <ErrorMessage>{error}</ErrorMessage>}
-            </InputContainer>
-            <RecaptchaContainer>
-              {/* Adicione o componente reCAPTCHA aqui, se necessário */}
-            </RecaptchaContainer>
-            <ForgotPasswordLink>Esqueceu a senha?</ForgotPasswordLink>
-            <Button type="submit">Entrar na minha conta</Button>
-            <Separator>ou entrar com</Separator>
-            <SocialButton>Facebook</SocialButton>
-            <RegisterLink>Cadastre-se</RegisterLink>
-          </Form>
-        </FormContainer>
-      </LoginContainer>
-      <Footer>
-        <FooterLink>Precisa de Ajuda?</FooterLink>
-        <FooterLink>Política de Privacidade</FooterLink>
-      </Footer>
-    </Container>
+              <RecaptchaContainer>
+                {/* Adicione o componente reCAPTCHA aqui, se necessário */}
+              </RecaptchaContainer>
+              <ForgotPasswordLink>Esqueceu a senha?</ForgotPasswordLink>
+              <Button type="submit">Entrar na minha conta</Button>
+              <Separator>ou entrar com</Separator>
+              <SocialButton>Facebook</SocialButton>
+              <RegisterLink onClick={handleCadastroClick}>Cadastre-se</RegisterLink>
+            </Form>
+          </FormContainer>
+        </LoginContainer>
+       
+      </Container>
+      <Footer/>
+    </>
   );
 };
 
@@ -89,6 +114,7 @@ const Container = styled.div`
   align-items: center;
   height: 100vh;
   background-color: #f5f5f5;
+  color: #000;
 `;
 
 const LoginContainer = styled.div`
@@ -103,10 +129,15 @@ const LoginContainer = styled.div`
 
 const ImageContainer = styled.div`
   flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    width: 80%;
+    height: auto;
+  }
+  @media (max-width: 768px) {
+    display: none;
   }
 `;
 
@@ -131,20 +162,39 @@ const Form = styled.form`
 `;
 
 const InputContainer = styled.div`
+  position: relative;
   margin-bottom: 20px;
 `;
 
 const Label = styled.label`
-  font-size: 14px;
-  margin-bottom: 5px;
-  text-align: left;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  background-color: white;
+  padding: 0 5px;
+  transition: all 0.2s;
+  pointer-events: none;
+  font-size: 16px;
+  color: #999;
 `;
 
 const Input = styled.input`
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  padding: 10px 10px 10px 0;
+  border: none;
+  border-bottom: 2px solid #ddd;
+  font-size: 16px;
+  &:focus {
+    border-bottom: 2px solid #0070f3;
+    outline: none;
+  }
+  &:focus + ${Label},
+  &:not(:placeholder-shown) + ${Label} {
+    top: -10px;
+    font-size: 12px;
+    color: #0070f3;
+  }
 `;
 
 const PasswordInput = styled.div`
@@ -244,23 +294,4 @@ const RegisterLink = styled.a`
   }
 `;
 
-const Footer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  padding: 10px 40px;
-  margin-top: 20px;
-  background-color: #fff;
-  border-top: 1px solid #ddd;
-`;
 
-const FooterLink = styled.a`
-  font-size: 14px;
-  color: #0070f3;
-  text-decoration: none;
-  cursor: pointer;
-
-  &:hover {
-    text-decoration: underline;
-  }
-`;

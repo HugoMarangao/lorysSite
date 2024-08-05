@@ -6,9 +6,11 @@ import './globals.css';
 import ProductCarousel from '@/componente/Produtos/ProdutosCarousel';
 import BannerBody from '@/componente/BannerBody/BannerBody';
 import Footer from '@/componente/Footer/Footer';
+import { AuthProvider } from '@/Configuracao/Context/AuthContext';
 
 const Page: React.FC = () => {
   return (
+    <AuthProvider>
     <div style={{background: "#f5f5f5", maxWidth:1780,alignItems:'center',justifyContent:'center'}}>
       <Header />
       <main>
@@ -21,6 +23,7 @@ const Page: React.FC = () => {
         <Footer/>
       </main>
     </div>
+    </AuthProvider>
   );
 };
 

@@ -1,14 +1,19 @@
-"use client";
+'use client';
 
 import React, { useState } from 'react';
 import styles from './Header.module.css';
 import { FiUser, FiHeart, FiShoppingBag, FiSearch, FiMenu } from 'react-icons/fi';
 import Link from 'next/link';
+import { useAuth } from '../../Configuracao/Context/AuthContext';
+import { useCart } from '../../Configuracao/Context/CartContext';
 
 const Header: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { cart } = useCart();
+  const { user, logout } = useAuth();
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -24,6 +29,28 @@ const Header: React.FC = () => {
     setActiveCategory(null);
   };
 
+  const toggleMenu = () => {
+    setMenuOpen(!menuOpen);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    setMenuOpen(false);
+  };
+
+  const getFirstName = (fullName: string | null) => {
+    if (!fullName) return '';
+    return fullName.split(' ')[0];
+  };
+
+
+  const getTotalPrice = () => {
+    return cart.reduce((total, item) => {
+      const price = parseFloat(item.price.replace('R$', '').replace(',', '.'));
+      return total + price;
+    }, 0).toFixed(2).replace('.', ',');
+  };
+
   return (
     <header className={styles.header}>
       <div className={styles.headerTop}>
@@ -31,7 +58,9 @@ const Header: React.FC = () => {
       </div>
       <div className={styles.headerMiddle}>
         <div className={styles.logo}>
-          <img src="/images/logo.png" alt="Logo" />
+          <Link href="/">
+            <img src="/images/logo.png" alt="Logo" />
+          </Link>
         </div>
         <div className={styles.searchContainer}>
           <input 
@@ -55,13 +84,36 @@ const Header: React.FC = () => {
           )}
         </div>
         <div className={styles.icons}>
-          <Link href="/login">
-            <button className={styles.iconButton}>
-              <FiUser />
-            </button>
-          </Link>
-          <button className={styles.iconButton}><FiHeart /></button>
-          <button className={styles.iconButton}><FiShoppingBag /></button>
+          {user ? (
+            <div className={styles.userMenu} onClick={toggleMenu}>
+              <FiUser size={35}/>
+              <span>Olá, {getFirstName(user.nome )|| user.email}</span>
+              {menuOpen && (
+                <div className={styles.dropdownMenu}>
+                  <Link href="/compra-rapida">Compra Rápida</Link>
+                  <Link href="/meus-pedidos">Meus Pedidos</Link>
+                  <Link href="/catalogo-digital">Meu Catálogo Digital</Link>
+                  <Link href="/meus-dados">Meus Dados</Link>
+                  <button onClick={handleLogout}>Sair</button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link href="/login">
+              
+                <FiUser size={35}/>
+              
+            </Link>
+          )}
+          <button className={styles.iconButton}><FiHeart size={35}/></button>
+          <div className={styles.cartContainer}>
+            {cart.length >= 0 && (
+              <div className={styles.cartBadge}>{cart.length}</div>
+            )}
+            <FiShoppingBag size={35}/>
+            <span>R$ {getTotalPrice()}</span>
+            
+          </div>
         </div>
       </div>
       <div className={styles.headerBottom}>
