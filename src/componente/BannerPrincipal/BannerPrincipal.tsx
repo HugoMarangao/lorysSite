@@ -79,19 +79,13 @@ const FooterImage = styled(Image)`
   height: 100px;
 `;
 
-const BannerPrincipal: React.FC = () => {
-  const [banners, setBanners] = useState<{ id: string, link: string, image: string }[]>([]);
+interface Banner {
+  id: string;
+  link: string;
+  image: string;
+}
 
-  useEffect(() => {
-    const fetchBanners = async () => {
-      const querySnapshot = await getDocs(collection(db, 'banners'));
-      const bannersList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as { id: string, link: string, image: string }[];
-      setBanners(bannersList);
-    };
-
-    fetchBanners();
-  }, []);
-
+const BannerPrincipal: React.FC<{ banners: Banner[] }> = ({ banners }) => {
   return (
     <>
       <SliderContainer>

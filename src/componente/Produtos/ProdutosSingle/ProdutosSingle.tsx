@@ -1,10 +1,10 @@
 'use client';
 
-import styled from 'styled-components';
-import { Carousel } from 'react-responsive-carousel';
-import 'react-responsive-carousel/lib/styles/carousel.min.css';
-import { useEffect } from 'react';
+import React, { useState } from 'react';
+import { Carousel, CarouselContent, CarouselItem } from '../../../components/ui/carousel';
+import Image from 'next/image';
 import { useCart } from '../../../Configuracao/Context/CartContext';
+
 interface Product {
   id: string;
   name: string;
@@ -18,248 +18,125 @@ interface Product {
   subcategory: string;
 }
 
-
 type ProductDetailsProps = {
   product: Product;
 };
+
 
 
 const ProductDetails = ({ product }: ProductDetailsProps) => {
   const { images, sizes, colors, name, price, promotion, description, category, subcategory } = product;
   const { addToCart } = useCart();
 
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+
   const handleAddToCart = () => {
-    addToCart(product);
+    if (!selectedSize || !selectedColor) {
+      alert('Por favor, selecione um tamanho e uma cor antes de adicionar ao carrinho.');
+      return;
+    }
+    addToCart({ ...product, selectedSize, selectedColor });
   };
 
-  useEffect(() => {
-    console.log("Produto carregado:", product);
-  }, [product]);
-
   return (
-    <Container>
-      <Breadcrumb>
-        <a href="/">Início</a> &gt; {category} &gt; {subcategory} &gt; {name}
-      </Breadcrumb>
-      <ProductWrapper>
-        <ImageContainer>
-          <Carousel showArrows={true} showThumbs={true} showIndicators={false} infiniteLoop={true}>
-            {images.map((image, index) => (
-              <img src={image} alt={name} key={index} />
-            ))}
+    <div className="flex flex-col p-5 mx-auto bg-gray-100 text-gray-600">
+      <div className="mb-5 text-sm text-gray-600">
+        <a href="/" className="text-blue-600 hover:underline">Início</a> &gt; {category} &gt; {subcategory} &gt; {name}
+      </div>
+      <div className="flex gap-10">
+        <div className="flex-1 max-w-xl">
+          <Carousel>
+            <CarouselContent className="-ml-4">
+              <CarouselItem>
+                <Image
+                  src={images[selectedImage]}
+                  alt={name}
+                  width={600}
+                  height={600}
+                  className="rounded-lg"
+                  style={{ objectFit: 'cover' }}
+                />
+              </CarouselItem>
+            </CarouselContent>
           </Carousel>
-        </ImageContainer>
-        <DetailsContainer>
-          <ProductName>{name}</ProductName>
-          <ProductPrice>
-            {promotion && <DiscountPrice>R$ {price}</DiscountPrice>}
-            <CurrentPrice>R$ {promotion || price}</CurrentPrice>
-          </ProductPrice>
-          
-          <ProductColors>
-            <ColorTitle>Cores Disponíveis:</ColorTitle>
-            <Colors>
+
+          <div className="flex mt-4 space-x-4">
+            {images.map((image, index) => (
+              <button
+                key={index}
+                onClick={() => setSelectedImage(index)}
+                className={`border ${selectedImage === index ? 'border-blue-500' : 'border-transparent'} rounded-lg`}
+              >
+                <Image
+                  src={image}
+                  alt={`Thumbnail ${index + 1}`}
+                  width={80}
+                  height={80}
+                  className="rounded-lg"
+                  style={{ objectFit: 'cover' }}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex-1 flex flex-col">
+          <h1 className="text-2xl font-bold mb-4">{name}</h1>
+          <div className="flex items-baseline mb-5 space-x-2">
+            <span className={`text-2xl font-bold ${promotion ? 'text-red-600' : 'text-gray-800'}`}>
+              R$ {promotion || price}
+            </span>
+            {promotion && (
+              <span className="text-lg text-gray-500 line-through transform -translate-y-1">
+                R$ {price}
+              </span>
+            )}
+          </div>
+
+          <div className="mb-5">
+            <h3 className="text-lg mb-2">Cores Disponíveis:</h3>
+            <div className="flex gap-3">
               {colors.map((color, index) => (
-                <ColorOption key={index}>
-                  <ColorCircle color={color} />
-                  <ColorName>{color}</ColorName>
-                </ColorOption>
+                <div
+                  key={index}
+                  onClick={() => setSelectedColor(color)}
+                  className={`cursor-pointer w-10 h-10 rounded-full border ${selectedColor === color ? 'border-blue-500' : 'border-gray-300'}`}
+                  style={{ backgroundColor: color }}
+                />
               ))}
-            </Colors>
-          </ProductColors>
-          <ProductSizes>
-            <SizeTitle>Tamanhos Disponíveis:</SizeTitle>
-            <Sizes>
+            </div>
+            {selectedColor && (
+              <div className="text-xs text-gray-600 mt-2">Cor selecionada: {selectedColor}</div>
+            )}
+          </div>
+
+          <div className="mb-5">
+            <h3 className="text-lg mb-2">Tamanhos Disponíveis:</h3>
+            <div className="flex gap-3">
               {sizes.map((size) => (
-                <Size key={size}>{size}</Size>
+                <div
+                  key={size}
+                  onClick={() => setSelectedSize(size)}
+                  className={`cursor-pointer px-4 py-2 border rounded-md ${selectedSize === size ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:bg-gray-200'}`}
+                >
+                  {size}
+                </div>
               ))}
-            </Sizes>
-          </ProductSizes>
-          <BuyButton onClick={handleAddToCart}>Comprar</BuyButton>
-          <ProductDescription>{description}</ProductDescription>
-        </DetailsContainer>
-      </ProductWrapper>
-    </Container>
+            </div>
+            {selectedSize && (
+              <div className="text-xs text-gray-600 mt-2">Tamanho selecionado: {selectedSize}</div>
+            )}
+          </div>
+
+          <button onClick={handleAddToCart} className="px-8 py-4 bg-red-600 text-white rounded-md text-lg hover:bg-red-700">
+            Comprar
+          </button>
+          <p className="mt-5 text-base text-gray-600">{description}</p>
+        </div>
+      </div>
+    </div>
   );
 };
 
 export default ProductDetails;
-
-// Styled Components
-
-const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  margin: auto;
-  background-color: #f5f5f5;
-  color: #666;
-`;
-
-const Breadcrumb = styled.div`
-  margin-bottom: 20px;
-  font-size: 14px;
-  color: #666;
-
-  a {
-    color: #0070f3;
-    text-decoration: none;
-  }
-
-  a:hover {
-    text-decoration: underline;
-  }
-`;
-
-const ProductWrapper = styled.div`
-  display: flex;
-  gap: 40px;
-`;
-
-const ImageContainer = styled.div`
-  flex: 1;
-
-  .carousel .slide img {
-    width: 100%;
-    height: auto;
-    max-height: 500px;
-    object-fit: cover;
-  }
-
-  .carousel .thumbs-wrapper {
-    margin-top: 10px;
-  }
-
-  .carousel .thumb {
-    border: 2px solid transparent;
-  }
-
-  .carousel .thumb.selected,
-  .carousel .thumb:hover {
-    border: 2px solid #0070f3;
-  }
-`;
-
-const DetailsContainer = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-`;
-
-const ProductName = styled.h1`
-  font-size: 28px;
-  font-weight: bold;
-  margin-bottom: 10px;
-`;
-
-const ProductPrice = styled.div`
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-`;
-
-const DiscountPrice = styled.span`
-  font-size: 18px;
-  color: #999;
-  text-decoration: line-through;
-  margin-right: 10px;
-`;
-
-const CurrentPrice = styled.span`
-  font-size: 24px;
-  color: #ff5252;
-  font-weight: bold;
-`;
-
-const ProductDescription = styled.p`
-  margin-bottom: 20px;
-  font-size: 16px;
-  color: #666;
-`;
-
-const ProductColors = styled.div`
-  margin-bottom: 20px;
-`;
-
-const ColorTitle = styled.h3`
-  font-size: 18px;
-  margin-bottom: 10px;
-`;
-
-const Colors = styled.div`
-  display: flex;
-  gap: 10px;
-`;
-
-const ColorOption = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-
-  img {
-    width: 50px;
-    height: 50px;
-    border-radius: 5px;
-    border: 1px solid #ddd;
-    object-fit: cover;
-  }
-
-  &:hover img {
-    border-color: #0070f3;
-  }
-`;
-
-const ColorName = styled.span`
-  font-size: 12px;
-  color: #666;
-  margin-top: 5px;
-`;
-
-const ProductSizes = styled.div`
-  margin-bottom: 20px;
-`;
-
-const SizeTitle = styled.h3`
-  font-size: 18px;
-  margin-bottom: 10px;
-`;
-
-const Sizes = styled.div`
-  display: flex;
-  gap: 10px;
-`;
-
-const Size = styled.div`
-  padding: 10px 20px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  cursor: pointer;
-
-  &:hover {
-    background: #f5f5f5;
-  }
-`;
-
-const BuyButton = styled.button`
-  padding: 15px 30px;
-  background: #ff5252;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 18px;
-  align-self: start;
-
-  &:hover {
-    background: #ff7675;
-  }
-`;
-
-const ColorCircle = styled.div<{ color: string }>`
-  width: 30px;
-  height: 30px;
-  background-color: ${({ color }) => color};
-  border-radius: 50%;
-  border: 1px solid #ddd;
-`;

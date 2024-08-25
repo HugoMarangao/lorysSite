@@ -14,6 +14,8 @@ interface Product {
   sizes: string[];
   category: string;
   subcategory: string;
+  selectedSize?: string;
+  selectedColor?: string;
 }
 
 

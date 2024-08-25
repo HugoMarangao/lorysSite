@@ -1,6 +1,7 @@
+import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { db } from '../../../Configuracao/Firebase/firebaseConf';
-import { collection, doc, getDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import ProductDetails from '../../../componente/Produtos/ProdutosSingle/ProdutosSingle';
 import Footer from '@/componente/Footer/Footer';
 import Header from '@/componente/Header/Header';
@@ -24,6 +25,38 @@ type ProdutoProps = {
   };
 };
 
+// Função para gerar os caminhos estaticamente
+export async function generateStaticParams() {
+  const productCollection = collection(db, 'products');
+  const productSnapshot = await getDocs(productCollection);
+  const paths = productSnapshot.docs.map((doc) => ({
+    id: doc.id,
+  }));
+
+  return paths;
+}
+
+// SEO dinâmico
+export async function generateMetadata({ params }: ProdutoProps): Promise<Metadata> {
+  const docRef = doc(collection(db, 'products'), params.id);
+  const docSnap = await getDoc(docRef);
+
+  if (!docSnap.exists()) {
+    return {
+      title: 'Produto não encontrado',
+      description: 'Este produto não foi encontrado no sistema.',
+    };
+  }
+
+  const productData = docSnap.data();
+  
+  return {
+    title: productData.seoTitle || productData.name,
+    description: productData.seoDescription || productData.description,
+  };
+}
+
+// Componente da página de produto
 const Produto = async ({ params }: ProdutoProps) => {
   const docRef = doc(collection(db, 'products'), params.id);
   const docSnap = await getDoc(docRef);
@@ -33,25 +66,23 @@ const Produto = async ({ params }: ProdutoProps) => {
     return null;
   }
 
-  // Extraindo todas as propriedades esperadas do documento Firestore
-  const data = docSnap.data();
-  const produto: Product = {
+  const product: Product = {
     id: docSnap.id,
-    name: data.name || '',
-    price: data.price || '',
-    promotion: data.promotion || '',
-    images: data.images || [],
-    colors: data.colors || [],
-    description: data.description || '',
-    sizes: data.sizes || [],
-    category: data.category || '',
-    subcategory: data.subcategory || '',
+    name: docSnap.data().name || '',
+    price: docSnap.data().price || '',
+    promotion: docSnap.data().promotion || '',
+    images: docSnap.data().images || [],
+    colors: docSnap.data().colors || [],
+    description: docSnap.data().description || '',
+    sizes: docSnap.data().sizes || [],
+    category: docSnap.data().category || '',
+    subcategory: docSnap.data().subcategory || '',
   };
 
   return (
     <>
       <Header />
-      <ProductDetails product={produto} />
+      <ProductDetails product={product} />
       <Footer />
     </>
   );

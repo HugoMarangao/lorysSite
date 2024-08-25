@@ -1,20 +1,35 @@
-'use client';
-
-import React, { useState } from 'react';
+'use client'
+import React, { useState, useEffect } from 'react';
 import styles from './Header.module.css';
 import { FiUser, FiHeart, FiShoppingBag, FiSearch, FiMenu } from 'react-icons/fi';
 import Link from 'next/link';
 import { useAuth } from '../../Configuracao/Context/AuthContext';
 import { useCart } from '../../Configuracao/Context/CartContext';
 import Image from 'next/image';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../../Configuracao/Firebase/firebaseConf';
 
 const Header: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]); // Novo estado para categorias
+
   const { cart } = useCart();
   const { user, logout } = useAuth();
+
+  // Função para carregar as categorias do Firebase
+  const fetchCategories = async () => {
+    const categoryCollection = collection(db, 'categories');
+    const categorySnapshot = await getDocs(categoryCollection);
+    const categoryList = categorySnapshot.docs.map(doc => doc.data().name); // Supondo que os nomes das categorias estão em 'name'
+    setCategories(categoryList);
+  };
+
+  useEffect(() => {
+    fetchCategories(); // Carregar as categorias quando o componente é montado
+  }, []);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -44,7 +59,6 @@ const Header: React.FC = () => {
     return fullName.split(' ')[0];
   };
 
-
   const getTotalPrice = () => {
     return cart.reduce((total, item) => {
       const price = parseFloat(item.price.replace('R$', '').replace(',', '.'));
@@ -60,7 +74,7 @@ const Header: React.FC = () => {
       <div className={styles.headerMiddle}>
         <div className={styles.logo}>
           <Link href="/">
-          <Image
+            <Image
               src="/images/logo.png"
               alt="Logo"
               width={200}
@@ -132,27 +146,9 @@ const Header: React.FC = () => {
               {activeCategory === 'Categorias' && (
                 <div className={styles.dropdown}>
                   <ul>
-                    <li>Moda Feminina</li>
-                    <li>Plus Size Feminino</li>
-                    <li>Moda Evangélica</li>
-                    <li>Roupa para Menina</li>
-                    <li>Roupa para Menino</li>
-                    <li>Moda Masculina</li>
-                    <li>Escolhas das Influencers</li>
-                    <li>Tendências</li>
-                    <li>Lingerie</li>
-                    <li>Moda Praia</li>
-                    <li>Moda Fitness</li>
-                    <li>Pijamas</li>
-                    <li>Plus Size Masculino</li>
-                    <li>Calçado Feminino</li>
-                    <li>Calçado Masculino</li>
-                    <li>Calçado para menina</li>
-                    <li>Calçado para menino</li>
-                    <li>Acessório Feminino</li>
-                    <li>Acessório Masculino</li>
-                    <li>Acessório para Menina</li>
-                    <li>Acessório para Menino</li>
+                    {categories.map((category, index) => (
+                      <li key={index}>{category}</li>
+                    ))}
                   </ul>
                 </div>
               )}
