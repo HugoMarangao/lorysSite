@@ -6,7 +6,17 @@ import 'react-responsive-carousel/lib/styles/carousel.min.css';
 import styled from 'styled-components';
 import Image from 'next/image';
 import Link from 'next/link';
-import { products } from './prducts';
+import { db } from '../../Configuracao/Firebase/firebaseConf';
+import { collection, getDocs } from 'firebase/firestore';
+
+interface Product {
+  id: string;
+  name: string;
+  price: string;
+  promotion?: string;
+  images: string[];
+  colors: string[];
+}
 
 const SliderContainer = styled.div`
   max-width: 100%;
@@ -97,7 +107,8 @@ const DiscountBadge = styled.div`
 `;
 
 const ProductCarousel: React.FC = () => {
-  const [centerSlidePercentage, setCenterSlidePercentage] = useState(25);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [centerSlidePercentage, setCenterSlidePercentage] = useState(0);
 
   const updateSlidePercentage = () => {
     const width = window.innerWidth;
@@ -109,12 +120,31 @@ const ProductCarousel: React.FC = () => {
   };
 
   useEffect(() => {
+    const fetchProducts = async () => {
+      const querySnapshot = await getDocs(collection(db, 'products'));
+      const productsList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Product[];
+      setProducts(productsList);
+    };
+
+    fetchProducts();
     updateSlidePercentage();
     window.addEventListener('resize', updateSlidePercentage);
+
     return () => {
       window.removeEventListener('resize', updateSlidePercentage);
     };
   }, []);
+
+  const calculateDiscountPercentage = (price: string, promotion: string = '') => {
+    const priceNumber = parseFloat(price);
+    const promotionNumber = parseFloat(promotion);
+
+    if (isNaN(priceNumber) || isNaN(promotionNumber) || promotionNumber >= priceNumber) {
+      return null;
+    }
+
+    return Math.round(((priceNumber - promotionNumber) / priceNumber) * 100);
+  };
 
   return (
     <SliderContainer>
@@ -129,34 +159,36 @@ const ProductCarousel: React.FC = () => {
         centerMode={true}
         centerSlidePercentage={centerSlidePercentage}
       >
-        {products.map((product) => (
-          <ProductWrapper key={product.id}>
-            {product.discount && (
-              <DiscountBadge>
-                {`-${Math.round(
-                  ((parseFloat(product.discount.replace(/[^0-9,]/g, '').replace(',', '.')) - parseFloat(product.price.replace(/[^0-9,]/g, '').replace(',', '.'))) /
-                    parseFloat(product.discount.replace(/[^0-9,]/g, '').replace(',', '.'))) *
-                    100
-                )}%`}
-              </DiscountBadge>
-            )}
-            <Link href={`/produtos/${product.id}`} passHref legacyBehavior>
-              <ProductContainer>
-                <ProductImage src={product.images[0]} alt={product.name} width={500} height={350} />
-                <PriceContainer>
-                  <ProductPrice $hasDiscount={!!product.discount}>{product.price}</ProductPrice>
-                  {product.discount && <ProductDiscount>{product.discount}</ProductDiscount>}
-                </PriceContainer>
-                <ProductName>{product.name}</ProductName>
-                <ColorDots>
-                  {product.colors.map((color, index) => (
-                    <Dot key={index} color={color.color} />
-                  ))}
-                </ColorDots>
-              </ProductContainer>
-            </Link>
-          </ProductWrapper>
-        ))}
+        {products.map((product) => {
+          const discountPercentage = calculateDiscountPercentage(product.price, product.promotion);
+
+          return (
+            <ProductWrapper key={product.id}>
+              {discountPercentage && (
+                <DiscountBadge>
+                  {`-${discountPercentage}%`}
+                </DiscountBadge>
+              )}
+              <Link href={`/produtos/${product.id}`} passHref legacyBehavior>
+                <ProductContainer>
+                  <ProductImage src={product.images[0]} alt={product.name} width={500} height={350} />
+                  <PriceContainer>
+                    <ProductPrice $hasDiscount={!!product.promotion}>
+                      {product.promotion ? `R$ ${product.promotion}` : `R$ ${product.price}`}
+                    </ProductPrice>
+                    {product.promotion && <ProductDiscount>{`R$ ${product.price}`}</ProductDiscount>}
+                  </PriceContainer>
+                  <ProductName>{product.name}</ProductName>
+                  <ColorDots>
+                    {product.colors.map((color, index) => (
+                      <Dot key={index} color={color} />
+                    ))}
+                  </ColorDots>
+                </ProductContainer>
+              </Link>
+            </ProductWrapper>
+          );
+        })}
       </Carousel>
     </SliderContainer>
   );

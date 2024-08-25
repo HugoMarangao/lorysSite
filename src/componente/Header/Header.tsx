@@ -101,6 +101,7 @@ const Header: React.FC = () => {
                   <Link href="/meus-pedidos">Meus Pedidos</Link>
                   <Link href="/catalogo-digital">Meu Catálogo Digital</Link>
                   <Link href="/meus-dados">Meus Dados</Link>
+                  {user.type == 'admin' ? <Link href="/relatorio">Dashboard</Link> : <></>}
                   <button onClick={handleLogout}>Sair</button>
                 </div>
               )}

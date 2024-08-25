@@ -6,6 +6,7 @@ import { auth, db } from '../Firebase/firebaseConf';
 import { doc, getDoc } from 'firebase/firestore';
 
 interface User {
+  type: string;
   nome: string;
   uid: string;
   email: string;

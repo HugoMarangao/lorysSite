@@ -1,4 +1,3 @@
-// src/componente/Produtos/ProductDetails.tsx
 'use client';
 
 import styled from 'styled-components';
@@ -6,22 +5,27 @@ import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
 import { useEffect } from 'react';
 import { useCart } from '../../../Configuracao/Context/CartContext';
+interface Product {
+  id: string;
+  name: string;
+  price: string;
+  promotion?: string;
+  images: string[];
+  colors: string[];
+  description: string;
+  sizes: string[];
+  category: string;
+  subcategory: string;
+}
+
 
 type ProductDetailsProps = {
-  product: {
-    id: number;
-    name: string;
-    price: string;
-    discount?: string;
-    images: string[];
-    colors: { name: string; image: string }[];
-    description: string;
-    sizes: string[];
-  };
+  product: Product;
 };
 
+
 const ProductDetails = ({ product }: ProductDetailsProps) => {
-  const { images, sizes, colors, name, price, discount, description } = product;
+  const { images, sizes, colors, name, price, promotion, description, category, subcategory } = product;
   const { addToCart } = useCart();
 
   const handleAddToCart = () => {
@@ -35,8 +39,7 @@ const ProductDetails = ({ product }: ProductDetailsProps) => {
   return (
     <Container>
       <Breadcrumb>
-        <a href="/">Início</a> &gt; <a href="/categoria/moda-feminina">Moda Feminina</a> &gt;{' '}
-        <a href="/categoria/calcas">Calças</a> &gt; <a href="/categoria/calcas-jeans">Calças Jeans</a> &gt; {name}
+        <a href="/">Início</a> &gt; {category} &gt; {subcategory} &gt; {name}
       </Breadcrumb>
       <ProductWrapper>
         <ImageContainer>
@@ -49,22 +52,19 @@ const ProductDetails = ({ product }: ProductDetailsProps) => {
         <DetailsContainer>
           <ProductName>{name}</ProductName>
           <ProductPrice>
-            {discount && <DiscountPrice>{discount}</DiscountPrice>}
-            <CurrentPrice>{price}</CurrentPrice>
+            {promotion && <DiscountPrice>R$ {price}</DiscountPrice>}
+            <CurrentPrice>R$ {promotion || price}</CurrentPrice>
           </ProductPrice>
           
           <ProductColors>
             <ColorTitle>Cores Disponíveis:</ColorTitle>
             <Colors>
-              {colors.map((color, index) => {
-                console.log(`Cor ${index}:`, color.image);  // Adicione este console para verificar o que está retornando
-                return (
-                  <ColorOption key={index}>
-                    <img src={color.image} alt={color.name} />
-                    <ColorName>{color.name}</ColorName>
-                  </ColorOption>
-                );
-              })}
+              {colors.map((color, index) => (
+                <ColorOption key={index}>
+                  <ColorCircle color={color} />
+                  <ColorName>{color}</ColorName>
+                </ColorOption>
+              ))}
             </Colors>
           </ProductColors>
           <ProductSizes>
@@ -254,4 +254,12 @@ const BuyButton = styled.button`
   &:hover {
     background: #ff7675;
   }
+`;
+
+const ColorCircle = styled.div<{ color: string }>`
+  width: 30px;
+  height: 30px;
+  background-color: ${({ color }) => color};
+  border-radius: 50%;
+  border: 1px solid #ddd;
 `;

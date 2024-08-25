@@ -56,6 +56,7 @@ const Cadastro: React.FC = () => {
         },
         promocoes,
         sms,
+        type: "user" 
       });
       router.push('/');
       alert('Cadastro realizado com sucesso!');

@@ -4,15 +4,18 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
 interface Product {
-  id: number;
+  id: string;
   name: string;
   price: string;
-  discount?: string;
+  promotion?: string;
   images: string[];
-  colors: { name: string; image: string }[];
+  colors: string[];
   description: string;
   sizes: string[];
+  category: string;
+  subcategory: string;
 }
+
 
 interface CartContextType {
   cart: Product[];

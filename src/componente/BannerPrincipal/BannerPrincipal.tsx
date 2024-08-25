@@ -1,19 +1,20 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
 import styled from 'styled-components';
 import Image from 'next/image';
+import { db } from '../../Configuracao/Firebase/firebaseConf';
+import { collection, getDocs } from 'firebase/firestore';
 
 const SliderContainer = styled.div`
   max-width: 100%;
   margin: auto;
   position: relative;
-  padding: 30px; /* Padding para dar espaço dentro do contêiner */
-  border-radius: 10px; /* Bordas arredondadas */
-  overflow: hidden; /* Garantir que o conteúdo respeite o border-radius */
-  
+  padding: 30px;
+  border-radius: 10px;
+  overflow: hidden;
 
   .carousel .control-arrow {
     position: absolute;
@@ -62,50 +63,57 @@ const ImageContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  border-radius: 10px; /* Bordas arredondadas para as imagens */
-  overflow: hidden; /* Garantir que o conteúdo respeite o border-radius */
+  border-radius: 10px;
+  overflow: hidden;
 `;
 
 const BannerImage = styled(Image)`
   width: 100%;
   height: 400px;
-  
 `;
+
 const FooterImage = styled(Image)`
   display: block;
   margin: 20px auto;
   width: auto;
-  height: 100px; /* Ajuste conforme necessário */
+  height: 100px;
 `;
+
 const BannerPrincipal: React.FC = () => {
+  const [banners, setBanners] = useState<{ id: string, link: string, image: string }[]>([]);
+
+  useEffect(() => {
+    const fetchBanners = async () => {
+      const querySnapshot = await getDocs(collection(db, 'banners'));
+      const bannersList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as { id: string, link: string, image: string }[];
+      setBanners(bannersList);
+    };
+
+    fetchBanners();
+  }, []);
+
   return (
     <>
       <SliderContainer>
-          <Carousel
-            showArrows={true}
-            showThumbs={false}
-            showStatus={false}
-            infiniteLoop={true}
-            autoPlay={true}
-            interval={5000}
-          >
-            <div>
+        <Carousel
+          showArrows={true}
+          showThumbs={false}
+          showStatus={false}
+          infiniteLoop={true}
+          autoPlay={true}
+          interval={5000}
+        >
+          {banners.map((banner) => (
+            <div key={banner.id}>
               <ImageContainer>
-                <BannerImage src="/images/Banner/banner1.png" alt="Banner 1" width={1920} height={600} />
+                <a href={banner.link} target="_blank" rel="noopener noreferrer">
+                  <BannerImage src={banner.image} alt={`Banner ${banner.id}`} width={1920} height={600} />
+                </a>
               </ImageContainer>
             </div>
-            <div>
-              <ImageContainer>
-                <BannerImage src="/images/Banner/banner2.png" alt="Banner 2" width={1920} height={600} />
-              </ImageContainer>
-            </div>
-            <div>
-              <ImageContainer>
-                <BannerImage src="/images/Banner/banner3.png" alt="Banner 3" width={1920} height={600} />
-              </ImageContainer>
-            </div>
-          </Carousel>
-      </SliderContainer> 
+          ))}
+        </Carousel>
+      </SliderContainer>
       <FooterImage src="/images/Banner/frente.png" alt="Frete" width={1200} height={150} />
     </>
   );
