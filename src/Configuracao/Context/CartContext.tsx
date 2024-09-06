@@ -12,11 +12,12 @@ interface Product {
   colors: string[];
   description: string;
   sizes: string[];
-  category: string;
-  subcategory: string;
-  selectedSize?: string;
-  selectedColor?: string;
+  selectedCategories: string[];
+  selectedSubcategories: string[];
+  selectedSize?: string;  // Adicionado
+  selectedColor?: string; // Adicionado
 }
+
 
 
 interface CartContextType {

@@ -6,7 +6,7 @@ import ProductDetails from '../../../componente/Produtos/ProdutosSingle/Produtos
 import Footer from '@/componente/Footer/Footer';
 import Header from '@/componente/Header/Header';
 
-type Product = {
+interface Product {
   id: string;
   name: string;
   price: string;
@@ -15,9 +15,11 @@ type Product = {
   colors: string[];
   description: string;
   sizes: string[];
-  category: string;
-  subcategory: string;
-};
+  selectedCategories: string[];
+  selectedSubcategories: string[];
+  selectedSize?: string;  // Adicionado
+  selectedColor?: string; // Adicionado
+}
 
 type ProdutoProps = {
   params: {
@@ -75,9 +77,10 @@ const Produto = async ({ params }: ProdutoProps) => {
     colors: docSnap.data().colors || [],
     description: docSnap.data().description || '',
     sizes: docSnap.data().sizes || [],
-    category: docSnap.data().category || '',
-    subcategory: docSnap.data().subcategory || '',
+    selectedCategories: docSnap.data().selectedCategories || [], // Inicialização como array
+    selectedSubcategories: docSnap.data().selectedSubcategories || [], // Inicialização como array
   };
+  
 
   return (
     <>

@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { FiPlusCircle, FiTrash2 } from 'react-icons/fi';
+import { FiPlusCircle, FiTrash2,FiEdit, FiLoader } from 'react-icons/fi';
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from '../../components/ui/dialog';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
@@ -9,12 +9,13 @@ import { Badge } from '../../components/ui/badge';
 import Sidebar from '@/componente/Dashboard/SideBar';
 import { SketchPicker } from 'react-color';
 import { db, storage } from '../../Configuracao/Firebase/firebaseConf';
-import { collection, addDoc, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, updateDoc,deleteDoc, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Edge } from 'react-flow-renderer';
 import { Node } from 'react-flow-renderer'; 
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface NodeData {
   label: string;
@@ -35,8 +36,17 @@ export default function Dashboard() {
           <AddSubcategory />
           <AddBanner />
           <Link href="/categoriasmental">
-          editar categoria
-        </Link>
+          <Card className="p-4">
+              <div className="flex items-center space-x-2">
+                <FiEdit size={24} className="text-gray-500" />
+                <span className="text-lg font-medium text-gray-600">Editar Categoria</span>
+              </div>
+            </Card>
+          </Link>
+          <Card className="p-4">
+             <ProductList/>
+          </Card>
+        
         </div>
       </div>
     </div>
@@ -358,8 +368,8 @@ function AddProduct() {
 function ProductForm({ categories, subcategories }: { categories: { id: string; name: string }[]; subcategories: { id: string; name: string; parentCategory: string }[] }) {
   const [productName, setProductName] = useState<string>('');
   const [price, setPrice] = useState<string>('');
-  const [category, setCategory] = useState<string>('');
-  const [subcategory, setSubcategory] = useState<string>('');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
   const [promotion, setPromotion] = useState<string>('');
   const [seoTitle, setSeoTitle] = useState<string>('');
   const [seoDescription, setSeoDescription] = useState<string>('');
@@ -375,6 +385,25 @@ function ProductForm({ categories, subcategories }: { categories: { id: string; 
     const files = Array.from(e.target.files || []);
     const newImages = files.map((file) => URL.createObjectURL(file));
     setImages((prev) => [...prev, ...newImages]);
+  };
+  const handleAddCategory = (category: string) => {
+    if (!selectedCategories.includes(category)) {
+      setSelectedCategories([...selectedCategories, category]);
+    }
+  };
+
+  const handleRemoveCategory = (category: string) => {
+    setSelectedCategories(selectedCategories.filter((c) => c !== category));
+  };
+
+  const handleAddSubcategory = (subcategory: string) => {
+    if (!selectedSubcategories.includes(subcategory)) {
+      setSelectedSubcategories([...selectedSubcategories, subcategory]);
+    }
+  };
+
+  const handleRemoveSubcategory = (subcategory: string) => {
+    setSelectedSubcategories(selectedSubcategories.filter((s) => s !== subcategory));
   };
 
   const handleAddColor = () => {
@@ -393,21 +422,21 @@ function ProductForm({ categories, subcategories }: { categories: { id: string; 
   const handleRemoveSize = (size: string) => {
     setSizes(sizes.filter((s) => s !== size));
   };
-
+  const [isLoading, setIsLoading] = useState(false);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!productName.trim() || !price.trim() || !category.trim() || !subcategory.trim() || !description.trim()) {
+    if (!productName.trim() || !price.trim() || selectedCategories.length === 0 || selectedSubcategories.length === 0 ||  !description.trim()) {
       setAlert({ message: 'Todos os campos obrigatórios devem ser preenchidos.', type: 'error' });
       return;
     }
-
+    setIsLoading(true);
     try {
       const productDoc = await addDoc(collection(db, 'products'), {
         name: productName,
         price,
-        category,
-        subcategory,
+        selectedCategories,
+        selectedSubcategories,
         promotion,
         seoTitle,
         seoDescription,
@@ -431,8 +460,8 @@ function ProductForm({ categories, subcategories }: { categories: { id: string; 
 
       setProductName('');
       setPrice('');
-      setCategory('');
-      setSubcategory('');
+      setSelectedCategories([]);
+      setSelectedSubcategories([]);
       setPromotion('');
       setSeoTitle('');
       setSeoDescription('');
@@ -443,6 +472,8 @@ function ProductForm({ categories, subcategories }: { categories: { id: string; 
     } catch (error) {
       console.error('Erro ao adicionar produto: ', error);
       setAlert({ message: 'Erro ao adicionar produto.', type: 'error' });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -475,29 +506,41 @@ function ProductForm({ categories, subcategories }: { categories: { id: string; 
         <InputField label="Preço" value={price} onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setPrice(e.target.value)} />
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div>
-          <label className="block text-gray-700 text-sm font-bold mb-2">Categoria</label>
-          <select className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value={category} onChange={(e) => setCategory(e.target.value)}>
-            <option value="">Selecione uma categoria</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.name}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
+      {/* Categoria */}
+      <div className="mb-4">
+        <label className="block text-gray-700 text-sm font-bold mb-2">Categorias</label>
+        <select className="shadow border rounded w-full py-2 px-3 text-gray-700" onChange={(e) => handleAddCategory(e.target.value)}>
+          <option value="">Selecione uma categoria</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.name}>{cat.name}</option>
+          ))}
+        </select>
+        <div className="flex flex-wrap mt-2">
+          {selectedCategories.map((category) => (
+            <Badge key={category} className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full mr-2 mb-2">
+              {category}
+              <button type="button" onClick={() => handleRemoveCategory(category)} className="ml-2"><FiTrash2 /></button>
+            </Badge>
+          ))}
         </div>
+      </div>
 
-        <div>
-          <label className="block text-gray-700 text-sm font-bold mb-2">Subcategoria</label>
-          <select className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value={subcategory} onChange={(e) => setSubcategory(e.target.value)}>
-            <option value="">Selecione uma subcategoria</option>
-            {subcategories.filter((sub) => sub.parentCategory === category).map((sub) => (
-              <option key={sub.id} value={sub.name}>
-                {sub.name}
-              </option>
-            ))}
-          </select>
+       {/* Subcategoria */}
+      <div className="mb-4">
+        <label className="block text-gray-700 text-sm font-bold mb-2">Subcategorias</label>
+        <select className="shadow border rounded w-full py-2 px-3 text-gray-700" onChange={(e) => handleAddSubcategory(e.target.value)}>
+          <option value="">Selecione uma subcategoria</option>
+          {subcategories.map((sub) => (
+            <option key={sub.id} value={sub.name}>{sub.name}</option>
+          ))}
+        </select>
+        <div className="flex flex-wrap mt-2">
+          {selectedSubcategories.map((subcategory) => (
+            <Badge key={subcategory} className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full mr-2 mb-2">
+              {subcategory}
+              <button type="button" onClick={() => handleRemoveSubcategory(subcategory)} className="ml-2"><FiTrash2 /></button>
+            </Badge>
+          ))}
         </div>
       </div>
 
@@ -565,10 +608,11 @@ function ProductForm({ categories, subcategories }: { categories: { id: string; 
       </div>
 
       <div className="flex items-center justify-end mt-4">
-        <Button type="submit" variant="default" className="bg-green-500 hover:bg-green-600 text-white py-2 px-6 rounded-md">
-          Adicionar Produto
+        <Button type="submit" variant="default" className="bg-green-500 hover:bg-green-600 text-white py-2 px-6 rounded-md" disabled={isLoading}>
+          {isLoading ? <FiLoader className="animate-spin mr-2" /> : 'Adicionar Produto'}
         </Button>
       </div>
+      
     </form>
   );
 }
@@ -588,5 +632,188 @@ function TextareaField({ label, ...props }: { label: string; [key: string]: any 
       <label className="block text-gray-700 text-sm font-bold mb-2">{label}</label>
       <textarea {...props} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
     </div>
+  );
+}
+function ProductList() {
+  const [products, setProducts] = useState<any[]>([]);
+  const [editProductId, setEditProductId] = useState<string | null>(null);
+  const [isEditModalOpen, setEditModalOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const productSnapshot = await getDocs(collection(db, 'products'));
+      const productList = productSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      setProducts(productList);
+    };
+
+    fetchProducts();
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'products', id));
+      setProducts(products.filter((product) => product.id !== id));
+    } catch (error) {
+      console.error('Erro ao deletar produto:', error);
+    }
+  };
+
+  return (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nome</TableHead>
+            <TableHead>Preço</TableHead>
+            <TableHead>Categorias</TableHead>
+            <TableHead>Subcategorias</TableHead>
+            <TableHead>Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {products.map((product) => (
+            <TableRow key={product.id}>
+              <TableCell>{product.name}</TableCell>
+              <TableCell>R$ {product.price}</TableCell>
+              <TableCell>{product.selectedCategories?.join(', ')}</TableCell>
+              <TableCell>{product.selectedSubcategories?.join(', ')}</TableCell>
+              <TableCell>
+                <div className="flex space-x-2">
+                  <Button onClick={() => { setEditProductId(product.id); setEditModalOpen(true); }} variant="ghost">
+                    <FiEdit className="text-blue-500" />
+                  </Button>
+                  <Button onClick={() => handleDelete(product.id)} variant="ghost">
+                    <FiTrash2 className="text-red-500" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      <Dialog open={isEditModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogTitle>Editar Produto</DialogTitle>
+          <DialogDescription>Atualize as informações do produto.</DialogDescription>
+          {editProductId && <EditProduct productId={editProductId} onClose={() => setEditModalOpen(false)} />}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function EditProduct({ productId, onClose }: { productId: string; onClose: () => void }) {
+  const [productData, setProductData] = useState<any>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      const docRef = doc(db, 'products', productId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setProductData(data);
+        setSelectedCategories(data.selectedCategories || []);
+        setSelectedSubcategories(data.selectedSubcategories || []);
+      }
+    };
+
+    fetchProduct();
+  }, [productId]);
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const productRef = doc(db, 'products', productId);
+      await updateDoc(productRef, {
+        ...productData,
+        selectedCategories,
+        selectedSubcategories,
+      });
+      onClose();
+    } catch (error) {
+      console.error('Erro ao atualizar produto:', error);
+    }
+  };
+
+  const handleAddCategory = (category: string) => {
+    if (!selectedCategories.includes(category)) {
+      setSelectedCategories([...selectedCategories, category]);
+    }
+  };
+
+  const handleRemoveCategory = (category: string) => {
+    setSelectedCategories(selectedCategories.filter((c) => c !== category));
+  };
+
+  const handleAddSubcategory = (subcategory: string) => {
+    if (!selectedSubcategories.includes(subcategory)) {
+      setSelectedSubcategories([...selectedSubcategories, subcategory]);
+    }
+  };
+
+  const handleRemoveSubcategory = (subcategory: string) => {
+    setSelectedSubcategories(selectedSubcategories.filter((s) => s !== subcategory));
+  };
+
+  if (!productData) return null;
+
+  return (
+    <DialogContent className="max-w-4xl">
+      <DialogTitle>Editar Produto</DialogTitle>
+      <DialogDescription>Atualize as informações do produto.</DialogDescription>
+      <form onSubmit={handleUpdate}>
+        <Input
+          
+          value={productData.name}
+          onChange={(e) => setProductData({ ...productData, name: e.target.value })}
+        />
+        <Input
+        
+          value={productData.price}
+          onChange={(e) => setProductData({ ...productData, price: e.target.value })}
+        />
+        
+        {/* Categorias */}
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2">Categorias</label>
+          <select className="shadow border rounded w-full py-2 px-3 text-gray-700" onChange={(e) => handleAddCategory(e.target.value)}>
+            <option value="">Selecione uma categoria</option>
+            {/* Mapeie as categorias disponíveis aqui */}
+          </select>
+          <div className="flex flex-wrap mt-2">
+            {selectedCategories.map((category) => (
+              <Badge key={category} className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full mr-2 mb-2">
+                {category}
+                <button type="button" onClick={() => handleRemoveCategory(category)} className="ml-2"><FiTrash2 /></button>
+              </Badge>
+            ))}
+          </div>
+        </div>
+
+        {/* Subcategorias */}
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2">Subcategorias</label>
+          <select className="shadow border rounded w-full py-2 px-3 text-gray-700" onChange={(e) => handleAddSubcategory(e.target.value)}>
+            <option value="">Selecione uma subcategoria</option>
+            {/* Mapeie as subcategorias disponíveis aqui */}
+          </select>
+          <div className="flex flex-wrap mt-2">
+            {selectedSubcategories.map((subcategory) => (
+              <Badge key={subcategory} className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full mr-2 mb-2">
+                {subcategory}
+                <button type="button" onClick={() => handleRemoveSubcategory(subcategory)} className="ml-2"><FiTrash2 /></button>
+              </Badge>
+            ))}
+          </div>
+        </div>
+
+        <Button type="submit" variant="default" className="bg-green-500 hover:bg-green-600 text-white py-2 px-6 rounded-md">
+          Atualizar Produto
+        </Button>
+      </form>
+    </DialogContent>
   );
 }

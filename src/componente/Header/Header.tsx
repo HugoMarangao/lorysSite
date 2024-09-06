@@ -1,12 +1,14 @@
-'use client'
+'use client';
 import React, { useState, useEffect } from 'react';
-import styles from './Header.module.css';
-import { FiUser, FiHeart, FiShoppingBag, FiSearch, FiMenu } from 'react-icons/fi';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { FiUser, FiHeart, FiShoppingBag, FiSearch } from 'react-icons/fi';
 import Link from 'next/link';
 import { useAuth } from '../../Configuracao/Context/AuthContext';
 import { useCart } from '../../Configuracao/Context/CartContext';
 import Image from 'next/image';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../Configuracao/Firebase/firebaseConf';
 
 const Header: React.FC = () => {
@@ -14,49 +16,58 @@ const Header: React.FC = () => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [categories, setCategories] = useState<string[]>([]); // Novo estado para categorias
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [femininoSubcategories, setFemininoSubcategories] = useState<string[]>([]);
+  const [masculinoSubcategories, setMasculinoSubcategories] = useState<string[]>([]);
+  const [plusSizeSubcategories, setPlusSizeSubcategories] = useState<string[]>([]);
+  const [marcasSubcategories, setMarcasSubcategories] = useState<string[]>([]);
+  const [novidadesSubcategories, setNovidadesSubcategories] = useState<string[]>([]);
+  const [promocoesSubcategories, setPromocoesSubcategories] = useState<string[]>([]);
 
   const { cart } = useCart();
   const { user, logout } = useAuth();
 
-  // Função para carregar as categorias do Firebase
   const fetchCategories = async () => {
     const categoryCollection = collection(db, 'categories');
     const categorySnapshot = await getDocs(categoryCollection);
-    const categoryList = categorySnapshot.docs.map(doc => doc.data().name); // Supondo que os nomes das categorias estão em 'name'
+    const categoryList = categorySnapshot.docs.map((doc) => ({ id: doc.id, name: doc.data().name }));
     setCategories(categoryList);
   };
 
+  const fetchSubcategories = async (categoryName: string, setSubcategories: React.Dispatch<React.SetStateAction<string[]>>) => {
+    const category = categories.find((cat) => cat.name === categoryName);
+    if (category) {
+      const subcategoryQuery = query(
+        collection(db, 'subcategories'),
+        where('parentCategory', 'array-contains', category.id)
+      );
+      const subcategorySnapshot = await getDocs(subcategoryQuery);
+      const subcategoryList = subcategorySnapshot.docs.map((doc) => doc.data().name);
+      setSubcategories(subcategoryList);
+    }
+  };
+
   useEffect(() => {
-    fetchCategories(); // Carregar as categorias quando o componente é montado
+    fetchCategories();
   }, []);
+
+  useEffect(() => {
+    fetchSubcategories('Feminino', setFemininoSubcategories);
+    fetchSubcategories('Masculino', setMasculinoSubcategories);
+    fetchSubcategories('Plus Size', setPlusSizeSubcategories);
+    fetchSubcategories('Marcas', setMarcasSubcategories);
+    fetchSubcategories('Novidades', setNovidadesSubcategories);
+    fetchSubcategories('Promoções', setPromocoesSubcategories);
+  }, [categories]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    const newSuggestions = ["Vestidos", "Vestido Lilica", "Vestido Longo", "Vestidos Festa", "Vestidos Plus Size", "Vestido Médio", "Vestido Jeans", "Vestidos Evangelicos", "Vestido Infantil"];
-    setSuggestions(newSuggestions);
-  };
-
-  const handleMouseEnter = (category: string) => {
-    setActiveCategory(category);
-  };
-
-  const handleMouseLeave = () => {
-    setActiveCategory(null);
-  };
-
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
+    setSuggestions(["Vestidos", "Vestido Lilica", "Vestido Longo"]); // Exemplo simplificado
   };
 
   const handleLogout = async () => {
     await logout();
     setMenuOpen(false);
-  };
-
-  const getFirstName = (fullName: string | null) => {
-    if (!fullName) return '';
-    return fullName.split(' ')[0];
   };
 
   const getTotalPrice = () => {
@@ -67,132 +78,191 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className={styles.header}>
-      <div className={styles.headerTop}>
-        <p>Frete Grátis Sul e Sudeste R$99* - Cupom QUEROAGORA</p>
-      </div>
-      <div className={styles.headerMiddle}>
-        <div className={styles.logo}>
-          <Link href="/">
-            <Image
-              src="/images/logo.png"
-              alt="Logo"
-              width={200}
-              height={100}
-              className={styles.logo}
-            />
-          </Link>
-        </div>
-        <div className={styles.searchContainer}>
-          <input 
-            type="text" 
-            placeholder="O que você procura?" 
-            className={styles.searchInput} 
+    <header className="bg-black text-white p-4 flex flex-col items-center">
+      <div className="flex justify-between w-full max-w-screen-xl">
+        <Link href="/">
+          <Image src="/images/logo.png" alt="Logo" width={100} height={50} />
+        </Link>
+        <div className="flex items-center gap-4">
+          <Input
+            placeholder="O que você procura?"
             value={searchTerm}
             onChange={handleSearchChange}
+            className="bg-white text-black"
           />
-          <button className={styles.searchButton}>
-            <FiSearch size={24} color='#000'/>
-          </button>
-          {searchTerm && (
-            <div className={styles.suggestions}>
-              {suggestions.map((suggestion, index) => (
-                <div key={index} className={styles.suggestion}>
-                  {suggestion}
-                </div>
-              ))}
-            </div>
-          )}
+          <Button variant="ghost" className="ml-2">
+            <FiSearch size={20} />
+          </Button>
         </div>
-        <div className={styles.icons}>
-          {user ? (
-            <div className={styles.userMenu} onClick={toggleMenu}>
-              <FiUser size={35}/>
-              <span>Olá, {getFirstName(user.nome )|| user.email}</span>
-              {menuOpen && (
-                <div className={styles.dropdownMenu}>
-                  <Link href="/compra-rapida">Compra Rápida</Link>
-                  <Link href="/meus-pedidos">Meus Pedidos</Link>
-                  <Link href="/catalogo-digital">Meu Catálogo Digital</Link>
-                  <Link href="/meus-dados">Meus Dados</Link>
-                  {user.type == 'admin' ? <Link href="/relatorio">Dashboard</Link> : <></>}
-                  <button onClick={handleLogout}>Sair</button>
-                </div>
+        <div className="flex items-center gap-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost">
+                <FiUser size={20} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {user ? (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link href="/meus-dados">Meus Dados</Link>
+                  </DropdownMenuItem>
+                  {user.type == 'admin' ?  <DropdownMenuItem asChild>
+                    <Link href="/relatorio">Dashboard</Link> 
+                  </DropdownMenuItem> : <></>}
+                  <DropdownMenuItem onClick={handleLogout}>Sair</DropdownMenuItem>
+                </>
+              ) : (
+                <DropdownMenuItem asChild>
+                  <Link href="/login">Entrar</Link>
+                </DropdownMenuItem>
               )}
-            </div>
-          ) : (
-            <Link href="/login">
-              
-                <FiUser size={35}/>
-              
-            </Link>
-          )}
-          <button className={styles.iconButton}><FiHeart size={35}/></button>
-          <div className={styles.cartContainer}>
-            {cart.length >= 0 && (
-              <div className={styles.cartBadge}>{cart.length}</div>
-            )}
-            <FiShoppingBag size={35}/>
-            <span>R$ {getTotalPrice()}</span>
-            
-          </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button variant="ghost">
+            <FiHeart size={20} />
+          </Button>
+          <Button variant="ghost">
+            <FiShoppingBag size={20} />
+            <span className="ml-1">{`R$ ${getTotalPrice()}`}</span>
+          </Button>
         </div>
       </div>
-      <div className={styles.headerBottom}>
-        <nav className={styles.navbar}>
-          <ul className={styles.navList}>
-            <li className={styles.navItem} onMouseEnter={() => handleMouseEnter('Categorias')} onMouseLeave={handleMouseLeave}>
-              Categorias
-              {activeCategory === 'Categorias' && (
-                <div className={styles.dropdown}>
-                  <ul>
-                    {categories.map((category, index) => (
-                      <li key={index}>{category}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </li>
-            <li className={styles.navItem} onMouseEnter={() => handleMouseEnter('Feminino')} onMouseLeave={handleMouseLeave}>
-              Feminino
-              {activeCategory === 'Feminino' && (
-                <div className={styles.submenu}>
-                  <div className={styles.submenuContent}>
-                    <div className={styles.submenuCategories}>
-                      <strong>Moda Feminina</strong>
-                      <ul>
-                        <li>Blusas</li>
-                        <li>Vestidos</li>
-                        <li>Calças</li>
-                        <li>Casacos</li>
-                        <li>Saias</li>
-                        <li>Shorts</li>
-                        <li>Macacão</li>
-                        <li>Camisas</li>
-                        <li>Conjunto</li>
-                        <li>Colete</li>
-                      </ul>
-                    </div>
-                    <div className={styles.submenuImage}>
-                      <img src="/images/Banner/banner3.png" alt="Moda Feminina" />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </li>
-            <li className={styles.navItem}>Masculino</li>
-            <li className={styles.navItem}>Plus Size</li>
-            <li className={`${styles.navItem} ${styles.hideOnMobile}`}>Meninas</li>
-            <li className={`${styles.navItem} ${styles.hideOnMobile}`}>Meninos</li>
-            <li className={`${styles.navItem} ${styles.hideOnMobile}`}>Calçados</li>
-            <li className={`${styles.navItem} ${styles.hideOnMobile}`}>Pijamas</li>
-            <li className={`${styles.navItem} ${styles.hideOnMobile}`}>Cama</li>
-            <li className={`${styles.navItem} ${styles.hideOnMobile}`}>Marcas</li>
-            <li className={`${styles.navItem} ${styles.hideOnMobile}`}>Novidades</li>
-            <li className={`${styles.navItem} ${styles.hideOnMobile}`}>Promoções</li>
-          </ul>
-        </nav>
-      </div>
+      <nav className="mt-2 flex justify-center gap-6">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost">Categorias</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {categories.map((category) => (
+              <DropdownMenuItem key={category.id} asChild>
+                <Link href={`/categoria/${category.name.toLowerCase()}`}>{category.name}</Link>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost">Feminino</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="flex min-w-[400px] p-4 bg-white shadow-lg rounded-lg">
+              <div className="flex-1">
+                <ul className="space-y-2">
+                  {femininoSubcategories.map((subcategory, index) => (
+                    <DropdownMenuItem key={index} className="text-sm hover:bg-gray-100">
+                      {subcategory}
+                    </DropdownMenuItem>
+                  ))}
+                </ul>
+              </div>
+              <div className="flex-shrink-0 pl-4">
+                <Image 
+                  src="/images/Banner/banner3.png" 
+                  alt="Moda Feminina" 
+                  width={350} 
+                  height={350} 
+                  className="rounded-lg object-cover"
+                />
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+
+        {/* Outros dropdowns para Masculino, Plus Size, Marcas, Novidades, Promoções */}
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost">Masculino</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="flex min-w-[400px] p-4 bg-white shadow-lg rounded-lg">
+              <div className="flex-1">
+                <ul className="space-y-2">
+                  {masculinoSubcategories.map((subcategory, index) => (
+                    <DropdownMenuItem key={index} className="text-sm hover:bg-gray-100">
+                      {subcategory}
+                    </DropdownMenuItem>
+                  ))}
+                </ul>
+              </div>
+              <div className="flex-shrink-0 pl-4">
+                <Image 
+                  src="/images/Banner/banner3.png" 
+                  alt="Moda Feminina" 
+                  width={350} 
+                  height={350} 
+                  className="rounded-lg object-cover"
+                />
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost">Plus Size</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="flex min-w-[400px] p-4 bg-white shadow-lg rounded-lg">
+              <div className="flex-1">
+                <ul className="space-y-2">
+                  {plusSizeSubcategories.map((subcategory, index) => (
+                    <DropdownMenuItem key={index} className="text-sm hover:bg-gray-100">
+                      {subcategory}
+                    </DropdownMenuItem>
+                  ))}
+                </ul>
+              </div>
+              <div className="flex-shrink-0 pl-4">
+                <Image 
+                  src="/images/Banner/banner3.png" 
+                  alt="Moda Feminina" 
+                  width={350} 
+                  height={350} 
+                  className="rounded-lg object-cover"
+                />
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost">Marcas</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {marcasSubcategories.map((subcategory, index) => (
+              <DropdownMenuItem key={index} asChild>
+                <Link href={`/marcas/${subcategory.toLowerCase()}`}>{subcategory}</Link>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost">Novidades</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {novidadesSubcategories.map((subcategory, index) => (
+              <DropdownMenuItem key={index} asChild>
+                <Link href={`/novidades/${subcategory.toLowerCase()}`}>{subcategory}</Link>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost">Promoções</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {promocoesSubcategories.map((subcategory, index) => (
+              <DropdownMenuItem key={index} asChild>
+                 <div className="flex justify-between items-center">
+                          <span>{subcategory}</span>
+                          <Image src="/images/Banner/banner3.png" alt={subcategory} width={50} height={50} />
+                        </div>              </DropdownMenuItem>
+                ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </nav>
     </header>
   );
 };

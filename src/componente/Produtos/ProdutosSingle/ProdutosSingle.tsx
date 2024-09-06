@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Carousel, CarouselContent, CarouselItem } from '../../../components/ui/carousel';
 import Image from 'next/image';
 import { useCart } from '../../../Configuracao/Context/CartContext';
@@ -14,23 +14,28 @@ interface Product {
   colors: string[];
   description: string;
   sizes: string[];
-  category: string;
-  subcategory: string;
+  selectedCategories: string[];
+  selectedSubcategories: string[];
+  selectedSize?: string;
+  selectedColor?: string;
 }
 
 type ProductDetailsProps = {
   product: Product;
 };
 
-
-
 const ProductDetails = ({ product }: ProductDetailsProps) => {
-  const { images, sizes, colors, name, price, promotion, description, category, subcategory } = product;
+  const { images, sizes, colors, name, price, promotion, description, selectedCategories, selectedSubcategories } = product;
   const { addToCart } = useCart();
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
+
+  useEffect(() => {
+    console.log('Categorias:', selectedCategories);
+    console.log('Subcategorias:', selectedSubcategories);
+  }, [selectedCategories, selectedSubcategories]);
 
   const handleAddToCart = () => {
     if (!selectedSize || !selectedColor) {
@@ -43,7 +48,11 @@ const ProductDetails = ({ product }: ProductDetailsProps) => {
   return (
     <div className="flex flex-col p-5 mx-auto bg-gray-100 text-gray-600">
       <div className="mb-5 text-sm text-gray-600">
-        <a href="/" className="text-blue-600 hover:underline">Início</a> &gt; {category} &gt; {subcategory} &gt; {name}
+        <a href="/" className="text-blue-600 hover:underline">Início</a> &gt; 
+        {selectedCategories.map((category, index) => (
+          <span key={index}> {category} &gt;</span>
+        ))}
+        {name}
       </div>
       <div className="flex gap-10">
         <div className="flex-1 max-w-xl">
