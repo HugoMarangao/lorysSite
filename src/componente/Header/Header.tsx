@@ -10,6 +10,7 @@ import { useCart } from '../../Configuracao/Context/CartContext';
 import Image from 'next/image';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../Configuracao/Firebase/firebaseConf';
+import { useRouter } from 'next/navigation'; // Use esta importação
 
 const Header: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,7 +24,7 @@ const Header: React.FC = () => {
   const [marcasSubcategories, setMarcasSubcategories] = useState<string[]>([]);
   const [novidadesSubcategories, setNovidadesSubcategories] = useState<string[]>([]);
   const [promocoesSubcategories, setPromocoesSubcategories] = useState<string[]>([]);
-
+  const router = useRouter();
   const { cart } = useCart();
   const { user, logout } = useAuth();
 
@@ -64,12 +65,25 @@ const Header: React.FC = () => {
     setSearchTerm(e.target.value);
     setSuggestions(["Vestidos", "Vestido Lilica", "Vestido Longo"]); // Exemplo simplificado
   };
-
+  const handleUserClick = () => {
+    if (!user) {
+      router.push('/login');
+    } else {
+      setMenuOpen(!menuOpen);
+    }
+  };
   const handleLogout = async () => {
     await logout();
     setMenuOpen(false);
   };
-
+  const handleCategoryClick = (categoryName: string, subcategoryName?: string) => {
+    const basePath = `/categoria/${categoryName.toLowerCase()}`;
+    const url = subcategoryName ? `${basePath}?subcategoria=${subcategoryName.toLowerCase()}` : basePath;
+    router.push(url);
+  };
+  
+  
+  
   const getTotalPrice = () => {
     return cart.reduce((total, item) => {
       const price = parseFloat(item.price.replace('R$', '').replace(',', '.'));
@@ -79,46 +93,49 @@ const Header: React.FC = () => {
 
   return (
     <header className="bg-black text-white p-4 flex flex-col items-center">
-      <div className="flex justify-between w-full max-w-screen-xl">
+        <div className="flex justify-between w-full max-w-screen-xl items-center">
         <Link href="/">
           <Image src="/images/logo.png" alt="Logo" width={100} height={50} />
         </Link>
-        <div className="flex items-center gap-4">
-          <Input
-            placeholder="O que você procura?"
-            value={searchTerm}
-            onChange={handleSearchChange}
-            className="bg-white text-black"
-          />
-          <Button variant="ghost" className="ml-2">
-            <FiSearch size={20} />
-          </Button>
+        <div className="flex items-center gap-4 flex-grow max-w-[600px]">
+          <div className="flex-grow relative">
+            <Input
+              placeholder="O que você procura?"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="bg-white text-black w-full rounded-full px-4 py-2"
+            />
+            <Button variant="ghost" className="absolute right-2 top-1/2 transform -translate-y-1/2">
+              <FiSearch size={20} />
+            </Button>
+          </div>
         </div>
         <div className="flex items-center gap-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost">
-                <FiUser size={20} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {user ? (
-                <>
-                  <DropdownMenuItem asChild>
-                    <Link href="/meus-dados">Meus Dados</Link>
-                  </DropdownMenuItem>
-                  {user.type == 'admin' ?  <DropdownMenuItem asChild>
-                    <Link href="/relatorio">Dashboard</Link> 
-                  </DropdownMenuItem> : <></>}
-                  <DropdownMenuItem onClick={handleLogout}>Sair</DropdownMenuItem>
-                </>
-              ) : (
+        {!user && (
+            <Button variant="ghost" onClick={handleUserClick}>
+              <FiUser size={20} />
+            </Button>
+          )}
+          {user && (
+            <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost">
+                  <FiUser size={20} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
                 <DropdownMenuItem asChild>
-                  <Link href="/login">Entrar</Link>
+                  <Link href="/meus-dados">Meus Dados</Link>
                 </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {user.type === 'admin' && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/relatorio">Dashboard</Link>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={handleLogout}>Sair</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           <Button variant="ghost">
             <FiHeart size={20} />
           </Button>
@@ -128,141 +145,149 @@ const Header: React.FC = () => {
           </Button>
         </div>
       </div>
-      <nav className="mt-2 flex justify-center gap-6">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost">Categorias</Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {categories.map((category) => (
-              <DropdownMenuItem key={category.id} asChild>
-                <Link href={`/categoria/${category.name.toLowerCase()}`}>{category.name}</Link>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost">Feminino</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="flex min-w-[400px] p-4 bg-white shadow-lg rounded-lg">
-              <div className="flex-1">
-                <ul className="space-y-2">
-                  {femininoSubcategories.map((subcategory, index) => (
-                    <DropdownMenuItem key={index} className="text-sm hover:bg-gray-100">
-                      {subcategory}
-                    </DropdownMenuItem>
-                  ))}
-                </ul>
-              </div>
-              <div className="flex-shrink-0 pl-4">
-                <Image 
-                  src="/images/Banner/banner3.png" 
-                  alt="Moda Feminina" 
-                  width={350} 
-                  height={350} 
-                  className="rounded-lg object-cover"
-                />
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+      <nav className="mt-2 flex justify-center gap-6 flex-wrap md:justify-start">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost">Categorias</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="min-w-full md:min-w-[200px]">
+          {categories.map((category) => (
+            <DropdownMenuItem key={category.id} onClick={() => handleCategoryClick(category.name)}>
+              {category.name}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
 
-        {/* Outros dropdowns para Masculino, Plus Size, Marcas, Novidades, Promoções */}
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost">Masculino</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="flex min-w-[400px] p-4 bg-white shadow-lg rounded-lg">
-              <div className="flex-1">
-                <ul className="space-y-2">
-                  {masculinoSubcategories.map((subcategory, index) => (
-                    <DropdownMenuItem key={index} className="text-sm hover:bg-gray-100">
-                      {subcategory}
-                    </DropdownMenuItem>
-                  ))}
-                </ul>
-              </div>
-              <div className="flex-shrink-0 pl-4">
-                <Image 
-                  src="/images/Banner/banner3.png" 
-                  alt="Moda Feminina" 
-                  width={350} 
-                  height={350} 
-                  className="rounded-lg object-cover"
-                />
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost">Plus Size</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="flex min-w-[400px] p-4 bg-white shadow-lg rounded-lg">
-              <div className="flex-1">
-                <ul className="space-y-2">
-                  {plusSizeSubcategories.map((subcategory, index) => (
-                    <DropdownMenuItem key={index} className="text-sm hover:bg-gray-100">
-                      {subcategory}
-                    </DropdownMenuItem>
-                  ))}
-                </ul>
-              </div>
-              <div className="flex-shrink-0 pl-4">
-                <Image 
-                  src="/images/Banner/banner3.png" 
-                  alt="Moda Feminina" 
-                  width={350} 
-                  height={350} 
-                  className="rounded-lg object-cover"
-                />
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        
+      <DropdownMenu>
+  <DropdownMenuTrigger asChild>
+    <Button variant="ghost">Feminino</Button>
+  </DropdownMenuTrigger>
+  <DropdownMenuContent className="flex flex-col md:flex-row min-w-full md:min-w-[400px] p-4 bg-white shadow-lg rounded-lg">
+    <div className="flex-1">
+      <ul className="space-y-2">
+        {femininoSubcategories.map((subcategory, index) => (
+          <DropdownMenuItem
+            key={index}
+            onClick={() => handleCategoryClick('Feminino', subcategory)}
+            className="text-sm hover:bg-gray-100 cursor-pointer"
+          >
+            {subcategory}
+          </DropdownMenuItem>
+        ))}
+      </ul>
+    </div>
+    <div className="flex-shrink-0 pl-4 hidden md:block">
+      <Image
+        src="/images/Banner/banner3.png"
+        alt="Moda Feminina"
+        width={350}
+        height={350}
+        className="rounded-lg object-cover"
+      />
+    </div>
+  </DropdownMenuContent>
+</DropdownMenu>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost">Marcas</Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {marcasSubcategories.map((subcategory, index) => (
-              <DropdownMenuItem key={index} asChild>
-                <Link href={`/marcas/${subcategory.toLowerCase()}`}>{subcategory}</Link>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost">Novidades</Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {novidadesSubcategories.map((subcategory, index) => (
-              <DropdownMenuItem key={index} asChild>
-                <Link href={`/novidades/${subcategory.toLowerCase()}`}>{subcategory}</Link>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost">Promoções</Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {promocoesSubcategories.map((subcategory, index) => (
-              <DropdownMenuItem key={index} asChild>
-                 <div className="flex justify-between items-center">
-                          <span>{subcategory}</span>
-                          <Image src="/images/Banner/banner3.png" alt={subcategory} width={50} height={50} />
-                        </div>              </DropdownMenuItem>
-                ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </nav>
+
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button variant="ghost">Masculino</Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent className="flex flex-col md:flex-row min-w-full md:min-w-[400px] p-4 bg-white shadow-lg rounded-lg">
+      <div className="flex-1">
+        <ul className="space-y-2">
+          {masculinoSubcategories.map((subcategory, index) => (
+            <DropdownMenuItem key={index} className="text-sm hover:bg-gray-100">
+              {subcategory}
+            </DropdownMenuItem>
+          ))}
+        </ul>
+      </div>
+      <div className="flex-shrink-0 pl-4 hidden md:block">
+        <Image 
+          src="/images/Banner/banner3.png" 
+          alt="Moda Masculina" 
+          width={350} 
+          height={350} 
+          className="rounded-lg object-cover"
+        />
+      </div>
+    </DropdownMenuContent>
+  </DropdownMenu>
+
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button variant="ghost">Plus Size</Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent className="flex flex-col md:flex-row min-w-full md:min-w-[400px] p-4 bg-white shadow-lg rounded-lg">
+      <div className="flex-1">
+        <ul className="space-y-2">
+          {plusSizeSubcategories.map((subcategory, index) => (
+            <DropdownMenuItem key={index} className="text-sm hover:bg-gray-100">
+              {subcategory}
+            </DropdownMenuItem>
+          ))}
+        </ul>
+      </div>
+      <div className="flex-shrink-0 pl-4 hidden md:block">
+        <Image 
+          src="/images/Banner/banner3.png" 
+          alt="Plus Size" 
+          width={350} 
+          height={350} 
+          className="rounded-lg object-cover"
+        />
+      </div>
+    </DropdownMenuContent>
+  </DropdownMenu>
+
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button variant="ghost">Marcas</Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent className="min-w-full md:min-w-[200px]">
+      {marcasSubcategories.map((subcategory, index) => (
+        <DropdownMenuItem key={index} asChild>
+          <Link href={`/marcas/${subcategory.toLowerCase()}`}>{subcategory}</Link>
+        </DropdownMenuItem>
+      ))}
+    </DropdownMenuContent>
+  </DropdownMenu>
+
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button variant="ghost">Novidades</Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent className="min-w-full md:min-w-[200px]">
+      {novidadesSubcategories.map((subcategory, index) => (
+        <DropdownMenuItem key={index} asChild>
+          <Link href={`/novidades/${subcategory.toLowerCase()}`}>{subcategory}</Link>
+        </DropdownMenuItem>
+      ))}
+    </DropdownMenuContent>
+  </DropdownMenu>
+
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button variant="ghost">Promoções</Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent className="min-w-full md:min-w-[200px]">
+      {promocoesSubcategories.map((subcategory, index) => (
+        <DropdownMenuItem key={index} asChild>
+          <div className="flex justify-between items-center">
+            <span>{subcategory}</span>
+            <Image src="/images/Banner/banner3.png" alt={subcategory} width={50} height={50} />
+          </div>
+        </DropdownMenuItem>
+      ))}
+    </DropdownMenuContent>
+  </DropdownMenu>
+</nav>
+
     </header>
   );
 };
