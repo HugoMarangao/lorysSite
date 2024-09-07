@@ -27,16 +27,16 @@ type CustomNode = Node<NodeData>;
 
 export default function Dashboard() {
   return (
-    <div className="flex">
+    <div className="flex flex-col md:flex-row min-h-screen">
       <Sidebar />
-      <div className="p-6 flex-1 bg-gray-100">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+      <div className="flex-1 flex flex-col p-6 bg-gray-100 md:ml-64"> {/* Layout ajusta automaticamente no mobile */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
           <AddProduct />
           <AddCategory />
           <AddSubcategory />
           <AddBanner />
           <Link href="/categoriasmental">
-          <Card className="p-4">
+            <Card className="p-4 cursor-pointer hover:bg-gray-200 transition">
               <div className="flex items-center space-x-2">
                 <FiEdit size={24} className="text-gray-500" />
                 <span className="text-lg font-medium text-gray-600">Editar Categoria</span>
@@ -44,9 +44,8 @@ export default function Dashboard() {
             </Card>
           </Link>
           <Card className="p-4">
-             <ProductList/>
+            <ProductList />
           </Card>
-        
         </div>
       </div>
     </div>

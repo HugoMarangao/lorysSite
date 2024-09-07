@@ -50,10 +50,10 @@ export default function Relatorio() {
     }, []);
 
     return (
-      <div className="flex">
+      <div className="flex flex-col md:flex-row min-h-screen">
         <Sidebar />
-        <div className="p-6 flex-1 bg-gray-100">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="flex-1 flex flex-col p-6 bg-gray-100 md:ml-64"> {/* Ajusta o layout automaticamente no mobile */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-16 md:mt-0"> {/* Adiciona margem superior no mobile para evitar sobreposição */}
             <StatCard title="Total vendas" value={`R$ ${totalSales}`} icon={<FiDollarSign />} />
             <StatCard title="Novos clientes" value={newClients} icon={<FiUsers />} />
             <StatCard title="Pedidos hoje" value={ordersToday} icon={<FiShoppingCart />} />
