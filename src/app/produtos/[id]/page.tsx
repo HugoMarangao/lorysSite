@@ -1,10 +1,11 @@
+// src/app/produtos/[id]/page.tsx
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { db } from '../../../Configuracao/Firebase/firebaseConf';
 import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
-import ProductDetails from '../../../componente/Produtos/ProdutosSingle/ProdutosSingle';
 import Footer from '@/componente/Footer/Footer';
 import Header from '@/componente/Header/Header';
+import ClientProductLoader from '../../../componente/Produtos/ProdutosSkeletom/ClientProductLoader'; // Importe o novo componente
 
 interface Product {
   id: string;
@@ -17,8 +18,8 @@ interface Product {
   sizes: string[];
   selectedCategories: string[];
   selectedSubcategories: string[];
-  selectedSize?: string;  // Adicionado
-  selectedColor?: string; // Adicionado
+  selectedSize?: string;
+  selectedColor?: string;
 }
 
 type ProdutoProps = {
@@ -51,7 +52,7 @@ export async function generateMetadata({ params }: ProdutoProps): Promise<Metada
   }
 
   const productData = docSnap.data();
-  
+
   return {
     title: productData.seoTitle || productData.name,
     description: productData.seoDescription || productData.description,
@@ -59,33 +60,11 @@ export async function generateMetadata({ params }: ProdutoProps): Promise<Metada
 }
 
 // Componente da página de produto
-const Produto = async ({ params }: ProdutoProps) => {
-  const docRef = doc(collection(db, 'products'), params.id);
-  const docSnap = await getDoc(docRef);
-
-  if (!docSnap.exists()) {
-    notFound();
-    return null;
-  }
-
-  const product: Product = {
-    id: docSnap.id,
-    name: docSnap.data().name || '',
-    price: docSnap.data().price || '',
-    promotion: docSnap.data().promotion || '',
-    images: docSnap.data().images || [],
-    colors: docSnap.data().colors || [],
-    description: docSnap.data().description || '',
-    sizes: docSnap.data().sizes || [],
-    selectedCategories: docSnap.data().selectedCategories || [], // Inicialização como array
-    selectedSubcategories: docSnap.data().selectedSubcategories || [], // Inicialização como array
-  };
-  
-
+const Produto = ({ params }: ProdutoProps) => {
   return (
     <>
       <Header />
-      <ProductDetails product={product} />
+      <ClientProductLoader productId={params.id} />
       <Footer />
     </>
   );

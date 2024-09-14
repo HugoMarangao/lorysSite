@@ -26,7 +26,8 @@ import { useRouter } from 'next/navigation';
 const Header: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpenMobile, setMenuOpenMobile] = useState(false);
+  const [menuOpenDesktop, setMenuOpenDesktop] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [femininoSubcategories, setFemininoSubcategories] = useState<string[]>([]);
   const [masculinoSubcategories, setMasculinoSubcategories] = useState<string[]>([]);
@@ -76,17 +77,26 @@ const Header: React.FC = () => {
     setSuggestions(["Vestidos", "Vestido Lilica", "Vestido Longo"]); // Exemplo simplificado
   };
 
-  const handleUserClick = () => {
+  const handleUserClickMobile = () => {
     if (!user) {
       router.push('/login');
     } else {
-      setMenuOpen(!menuOpen);
+      setMenuOpenMobile(!menuOpenMobile);
+    }
+  };
+
+  const handleUserClickDesktop = () => {
+    if (!user) {
+      router.push('/login');
+    } else {
+      setMenuOpenDesktop(!menuOpenDesktop);
     }
   };
 
   const handleLogout = async () => {
     await logout();
-    setMenuOpen(false);
+    setMenuOpenMobile(false);
+    setMenuOpenDesktop(false);
   };
 
   const handleCategoryClick = (categoryName: string, subcategoryName?: string) => {
@@ -216,11 +226,11 @@ const Header: React.FC = () => {
         {/* Ícones do lado direito */}
         <div className="flex items-center space-x-4">
           {!user ? (
-            <Button variant="ghost" onClick={handleUserClick}>
+            <Button variant="ghost" onClick={handleUserClickMobile}>
               <FiUser size={20} />
             </Button>
           ) : (
-            <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+            <DropdownMenu open={menuOpenMobile} onOpenChange={setMenuOpenMobile}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost">
                   <FiUser size={20} />
@@ -279,12 +289,12 @@ const Header: React.FC = () => {
           </div>
           <div className="flex items-center gap-4">
             {!user && (
-              <Button variant="ghost" onClick={handleUserClick}>
+              <Button variant="ghost" onClick={handleUserClickDesktop}>
                 <FiUser size={20} />
               </Button>
             )}
             {user && (
-              <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+              <DropdownMenu open={menuOpenDesktop} onOpenChange={setMenuOpenDesktop}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost">
                     <FiUser size={20} />

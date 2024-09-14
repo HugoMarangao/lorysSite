@@ -1,9 +1,12 @@
+// src/components/ProductDetails.tsx
+
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Carousel, CarouselContent, CarouselItem } from '../../../components/ui/carousel';
 import Image from 'next/image';
 import { useCart } from '../../../Configuracao/Context/CartContext';
+import Link from 'next/link';
 
 interface Product {
   id: string;
@@ -25,17 +28,20 @@ type ProductDetailsProps = {
 };
 
 const ProductDetails = ({ product }: ProductDetailsProps) => {
-  const { images, sizes, colors, name, price, promotion, description, selectedCategories, selectedSubcategories } = product;
+  const {
+    images,
+    sizes,
+    colors,
+    name,
+    price,
+    promotion,
+    description,
+    selectedCategories,
+  } = product;
   const { addToCart } = useCart();
-
-  const [selectedImage, setSelectedImage] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
-
-  useEffect(() => {
-    console.log('Categorias:', selectedCategories);
-    console.log('Subcategorias:', selectedSubcategories);
-  }, [selectedCategories, selectedSubcategories]);
 
   const handleAddToCart = () => {
     if (!selectedSize || !selectedColor) {
@@ -48,35 +54,43 @@ const ProductDetails = ({ product }: ProductDetailsProps) => {
   return (
     <div className="flex flex-col p-5 mx-auto bg-gray-100 text-gray-600">
       <div className="mb-5 text-sm text-gray-600">
-        <a href="/" className="text-blue-600 hover:underline">Início</a> &gt; 
+        <Link href="/" className="text-blue-600 hover:underline">Início</Link> &gt;
         {selectedCategories.map((category, index) => (
-          <span key={index}> {category} &gt;</span>
+          <React.Fragment key={index}>
+            <Link href={`/categoria/${category.toLowerCase()}`} className="text-blue-600 hover:underline">
+              {category}
+            </Link>
+            &gt;
+          </React.Fragment>
         ))}
-        {name}
+        <span> {name}</span>
       </div>
-      <div className="flex gap-10">
-        <div className="flex-1 max-w-xl">
+      <div className="flex flex-col md:flex-row gap-10">
+        <div className="flex-1 max-w-xl mx-auto">
           <Carousel>
             <CarouselContent className="-ml-4">
-              <CarouselItem>
-                <Image
-                  src={images[selectedImage]}
-                  alt={name}
-                  width={600}
-                  height={600}
-                  className="rounded-lg"
-                  style={{ objectFit: 'cover' }}
-                />
-              </CarouselItem>
+              {images.map((image, index) => (
+                <CarouselItem key={index}>
+                  <Image
+                    src={image}
+                    alt={`${name} - Imagem ${index + 1}`}
+                    width={600}
+                    height={600}
+                    className="rounded-lg"
+                    style={{ objectFit: 'cover' }}
+                  />
+                </CarouselItem>
+              ))}
             </CarouselContent>
           </Carousel>
 
-          <div className="flex mt-4 space-x-4">
+          {/* Miniaturas (apenas em desktop) */}
+          <div className="hidden md:flex mt-4 space-x-4">
             {images.map((image, index) => (
               <button
                 key={index}
-                onClick={() => setSelectedImage(index)}
-                className={`border ${selectedImage === index ? 'border-blue-500' : 'border-transparent'} rounded-lg`}
+                onClick={() => {/* lógica para mudar a imagem se necessário */}}
+                className={`border rounded-lg`}
               >
                 <Image
                   src={image}

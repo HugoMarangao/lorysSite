@@ -43,7 +43,9 @@ export default function Dashboard() {
               </div>
             </Card>
           </Link>
-          <Card className="p-4">
+          <AddBanner />
+          {/* Ajuste aqui: Faz o ProductList ocupar 100% no desktop */}
+          <Card className="p-4 col-span-1 md:col-span-2 lg:col-span-3">
             <ProductList />
           </Card>
         </div>
@@ -637,6 +639,8 @@ function ProductList() {
   const [products, setProducts] = useState<any[]>([]);
   const [editProductId, setEditProductId] = useState<string | null>(null);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -657,6 +661,22 @@ function ProductList() {
     }
   };
 
+  // Cálculo de Paginação
+  const totalPages = Math.ceil(products.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentProducts = products.slice(startIndex, startIndex + itemsPerPage);
+
+  const handlePageChange = (direction: 'next' | 'prev') => {
+    setCurrentPage((prevPage) => {
+      if (direction === 'next' && prevPage < totalPages) {
+        return prevPage + 1;
+      } else if (direction === 'prev' && prevPage > 1) {
+        return prevPage - 1;
+      }
+      return prevPage;
+    });
+  };
+
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -670,7 +690,7 @@ function ProductList() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products.map((product) => (
+          {currentProducts.map((product) => (
             <TableRow key={product.id}>
               <TableCell>{product.name}</TableCell>
               <TableCell>R$ {product.price}</TableCell>
@@ -691,6 +711,27 @@ function ProductList() {
         </TableBody>
       </Table>
 
+      {/* Controles de Paginação */}
+      <div className="flex justify-between items-center mt-4">
+        <Button
+          onClick={() => handlePageChange('prev')}
+          variant="default"
+          disabled={currentPage === 1}
+        >
+          Anterior
+        </Button>
+        <span className="text-sm text-gray-700">
+          Página {currentPage} de {totalPages}
+        </span>
+        <Button
+          onClick={() => handlePageChange('next')}
+          variant="default"
+          disabled={currentPage === totalPages}
+        >
+          Próxima
+        </Button>
+      </div>
+
       <Dialog open={isEditModalOpen} onOpenChange={setEditModalOpen}>
         <DialogContent className="max-w-4xl">
           <DialogTitle>Editar Produto</DialogTitle>
@@ -701,6 +742,10 @@ function ProductList() {
     </div>
   );
 }
+
+
+
+
 
 function EditProduct({ productId, onClose }: { productId: string; onClose: () => void }) {
   const [productData, setProductData] = useState<any>(null);
