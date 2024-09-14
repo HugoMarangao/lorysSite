@@ -1,9 +1,8 @@
-// src/Configuracao/Firebase/AnalyticsTracker.tsx
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import ReactPixel from 'react-facebook-pixel'; // Importando o pacote do Facebook Pixel
 import { analytics } from '@/Configuracao/Firebase/firebaseConf';
 import { logEvent } from 'firebase/analytics';
 import { db } from '@/Configuracao/Firebase/firebaseConf';
@@ -26,20 +25,24 @@ export default function AnalyticsTracker() {
   const [startTime, setStartTime] = useState<number>(Date.now());
 
   useEffect(() => {
+    // Inicializar o Facebook Pixel
+    ReactPixel.init('3064021873666359'); // Substitua pelo seu ID do Pixel
+    ReactPixel.pageView(); // Rastreia a visualização de página inicial
+
     const excludedRoutes = ['/dashboard', '/relatorio']; // Ajuste as rotas conforme necessário
 
     const logPageView = async (url: string) => {
       // Verificar se a rota está excluída
       if (excludedRoutes.some((route) => url.startsWith(route))) {
-        // Não registrar esta rota
         return;
       }
 
       if (analytics) {
         try {
           await logEvent(analytics, 'page_view', { page_path: url });
+          ReactPixel.pageView(); // Rastrear visualizações de página no Pixel
 
-          // Adiciona um documento ao Firestore
+          // Registro no Firestore
           await addDoc(collection(db, 'analytics'), {
             event_type: 'page_view',
             page_path: url,
@@ -47,7 +50,7 @@ export default function AnalyticsTracker() {
             user_id: userId,
           });
 
-          // Atualizar dados de sessão do usuário
+          // Atualizar dados de sessão do usuário no Firestore
           const userSessionRef = doc(db, 'user_sessions', userId);
           await updateDoc(userSessionRef, {
             page_views: increment(1),
