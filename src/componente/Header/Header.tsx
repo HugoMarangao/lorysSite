@@ -22,6 +22,7 @@ import Image from 'next/image';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../Configuracao/Firebase/firebaseConf';
 import { useRouter } from 'next/navigation';
+import CartDrawer from './sacola/cartDrawer';
 
 const Header: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -38,7 +39,14 @@ const Header: React.FC = () => {
   const router = useRouter();
   const { cart } = useCart();
   const { user, logout } = useAuth();
+  const [isCartOpen, setIsCartOpen] = useState(false); // Estado para controlar a abertura do drawer
+  const handleCartClick = () => {
+    setIsCartOpen(true);
+  };
 
+  const handleCartClose = () => {
+    setIsCartOpen(false);
+  };
   const fetchCategories = async () => {
     const categoryCollection = collection(db, 'categories');
     const categorySnapshot = await getDocs(categoryCollection);
@@ -252,7 +260,7 @@ const Header: React.FC = () => {
           <Button variant="ghost">
             <FiHeart size={20} />
           </Button>
-          <Button variant="ghost">
+          <Button variant="ghost" onClick={handleCartClick}>
             <FiShoppingBag size={20} />
           </Button>
         </div>
@@ -316,7 +324,7 @@ const Header: React.FC = () => {
             <Button variant="ghost">
               <FiHeart size={20} />
             </Button>
-            <Button variant="ghost">
+            <Button variant="ghost" onClick={handleCartClick}>
               <FiShoppingBag size={20} />
               <span className="ml-1">{`R$ ${getTotalPrice()}`}</span>
             </Button>
@@ -461,6 +469,8 @@ const Header: React.FC = () => {
           </DropdownMenu>
         </nav>
       </div>
+      <CartDrawer isOpen={isCartOpen} onClose={handleCartClose} />
+
     </header>
   );
 };

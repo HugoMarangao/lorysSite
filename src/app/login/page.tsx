@@ -36,6 +36,11 @@ const Login: React.FC = () => {
     if (email && password) {
       try {
         await signInWithEmailAndPassword(auth, email, password);
+        
+        // Após o login bem-sucedido, envia o evento para o Facebook
+        await sendFacebookLeadEvent(email);
+
+        // Redireciona o usuário para a página inicial
         router.push('/');
       } catch (err) {
         setError('Usuário não existe');
@@ -46,7 +51,30 @@ const Login: React.FC = () => {
   const handleCadastroClick = () => {
     router.push('/cadastro');
   };
-
+  // Função para enviar o evento de lead para o Facebook
+  const sendFacebookLeadEvent = async (email: string) => {
+    try {
+      await fetch('/api/facebook/sendEvent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          event_name: 'login', // Evento de Lead após login
+          user_data: {
+            em: sha256(email), // Hash do e-mail do usuário (SHA256)
+            client_user_agent: navigator.userAgent,
+          },
+          custom_data: {},
+        }),
+      });
+      console.log('Evento de lead enviado com sucesso para o Facebook');
+    } catch (error) {
+      console.error('Erro ao enviar evento de lead para o Facebook:', error);
+    }
+  };
+  
+  
   return (
     <>
       <HeaderSecudaria />
@@ -303,3 +331,9 @@ const RegisterLink = styled.a`
 `;
 
 
+// Código para calcular o hash SHA256 do email
+import crypto from 'crypto';
+
+function sha256(data: string): string {
+  return crypto.createHash('sha256').update(data).digest('hex');
+}

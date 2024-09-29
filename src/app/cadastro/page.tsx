@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import HeaderSecudaria from '@/componente/Header/HeaderSecundaria/Header';
 import Footer from '@/componente/Footer/Footer';
 import Image from 'next/image';
+import crypto from 'crypto'; // Para hashing SHA256
 
 const Cadastro: React.FC = () => {
   const [nome, setNome] = useState('');
@@ -58,6 +59,7 @@ const Cadastro: React.FC = () => {
         sms,
         type: "user" 
       });
+      await sendFacebookLeadEvent(email);
       router.push('/');
       alert('Cadastro realizado com sucesso!');
     } catch (err) {
@@ -65,7 +67,33 @@ const Cadastro: React.FC = () => {
       setError('Erro ao cadastrar: ' + err);
     }
   };
+  // Função para enviar o evento de lead para o Facebook
+  const sendFacebookLeadEvent = async (email: string) => {
+    try {
+      await fetch('/api/facebook/sendEvent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          event_name: 'cadastro', // Evento de Lead após cadastro
+          user_data: {
+            em: sha256(email), // Hash do e-mail do usuário (SHA256)
+            client_user_agent: navigator.userAgent,
+          },
+          custom_data: {},
+        }),
+      });
+      console.log('Evento de lead enviado com sucesso para o Facebook');
+    } catch (error) {
+      console.error('Erro ao enviar evento de lead para o Facebook:', error);
+    }
+  };
 
+  // Função para calcular o hash SHA256 do e-mail
+  function sha256(data: string): string {
+    return crypto.createHash('sha256').update(data).digest('hex');
+  }
   const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newCep = e.target.value.replace(/\D/g, ''); // Remove caracteres não numéricos
     setCep(e.target.value);
