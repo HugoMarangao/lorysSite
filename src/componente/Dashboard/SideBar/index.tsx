@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FiHome, FiBarChart2, FiSettings, FiUsers } from 'react-icons/fi';
+import { FiHome, FiBarChart2, FiSettings, FiUsers, FiShoppingBag } from 'react-icons/fi';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -31,6 +31,12 @@ function Sidebar() {
           active={pathname === '/dashboard'}
           icon={<FiHome size={24} />}
           label="Dashboard"
+        />
+        <SidebarItem
+          href="/pedidos"
+          active={pathname === '/pedidos'}
+          icon={<FiShoppingBag size={24} />}
+          label="Pedidos"
         />
         <SidebarItem
           href="/relatorio"

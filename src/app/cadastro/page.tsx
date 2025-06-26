@@ -341,7 +341,7 @@ const Container = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  height: 120vh;
   background-color: #f5f5f5;
   color: #000;
 `;

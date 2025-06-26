@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FiPlusCircle, FiTrash2,FiEdit, FiLoader } from 'react-icons/fi';
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from '../../components/ui/dialog';
 import { Input } from '../../components/ui/input';
@@ -16,7 +16,12 @@ import Image from 'next/image';
 import { Edge } from 'react-flow-renderer';
 import { Node } from 'react-flow-renderer'; 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-
+import BannerList from '@/componente/Dashboard/BannerList/BannerList';
+interface AddBannerProps {
+  title: string;
+  buttonLabel: string;
+  collectionName: string;
+}
 interface NodeData {
   label: string;
   type: 'category' | 'subcategory';
@@ -34,7 +39,11 @@ export default function Dashboard() {
           <AddProduct />
           <AddCategory />
           <AddSubcategory />
-          <AddBanner />
+          {/* Banner Principal */}
+          <AddBanner title={''} buttonLabel={''} collectionName={''}            title="Banner Principal"
+            buttonLabel="Adicionar Banner Principal"
+            collectionName="banners"
+          />
           <Link href="/categoriasmental">
             <Card className="p-4 cursor-pointer hover:bg-gray-200 transition">
               <div className="flex items-center space-x-2">
@@ -43,10 +52,24 @@ export default function Dashboard() {
               </div>
             </Card>
           </Link>
-          <AddBanner />
+          {/* Banners do Body */}
+         <AddBanner title={''} buttonLabel={''} collectionName={''}            title="Banner Body"
+            buttonLabel="Adicionar Banner Body"
+            collectionName="banners_body"
+          />
           {/* Ajuste aqui: Faz o ProductList ocupar 100% no desktop */}
           <Card className="p-4 col-span-1 md:col-span-2 lg:col-span-3">
             <ProductList />
+          </Card>
+          <Card className="p-4 col-span-1 md:col-span-2 lg:col-span-3">
+            <BannerList
+            title="Lista de Banners Principais"
+            collectionName="banners"
+         />
+         <BannerList
+            title="Lista de Banners do Body"
+            collectionName="banners_body"
+          />
           </Card>
         </div>
       </div>
@@ -81,7 +104,13 @@ function AddCategory() {
   );
 }
 
-function AddBanner() {
+interface AddBannerProps {
+  title: string;
+  buttonLabel: string;
+  collectionName: string;
+}
+
+function AddBanner({ title, buttonLabel, collectionName }: AddBannerProps) {
   const [isBannerModalOpen, setBannerModalOpen] = useState(false);
 
   return (
@@ -89,18 +118,18 @@ function AddBanner() {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <FiPlusCircle size={24} className="text-gray-500" />
-          <span className="text-lg font-medium text-gray-600">Novo Banner</span>
+          <span className="text-lg font-medium text-gray-600">{buttonLabel}</span>
         </div>
         <Dialog open={isBannerModalOpen} onOpenChange={setBannerModalOpen}>
           <DialogTrigger asChild>
-            <Button variant="default">Adicionar</Button>
+            <Button variant="default">{buttonLabel}</Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
-            <DialogTitle>Adicionar Novo Banner</DialogTitle>
+            <DialogTitle>{title}</DialogTitle>
             <DialogDescription>
               Preencha as informações para adicionar um novo banner ao seu site.
             </DialogDescription>
-            <BannerForm />
+            <BannerForm collectionName={collectionName} />
           </DialogContent>
         </Dialog>
       </div>
@@ -108,21 +137,25 @@ function AddBanner() {
   );
 }
 
-function BannerForm() {
+interface BannerFormProps {
+  collectionName: string;
+}
+
+function BannerForm({ collectionName }: BannerFormProps) {
   const [bannerLink, setBannerLink] = useState('');
   const [bannerImage, setBannerImage] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string>('');
   const [alert, setAlert] = useState({ message: '', type: '' });
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setBannerImage(file);
       setPreviewImage(URL.createObjectURL(file));
     }
-  };
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!bannerLink.trim() || !bannerImage) {
@@ -131,13 +164,14 @@ function BannerForm() {
     }
 
     try {
-      const bannerDoc = await addDoc(collection(db, 'banners'), { link: bannerLink });
+      // grava na coleção parametrizada
+      const bannerDoc = await addDoc(collection(db, collectionName), { link: bannerLink });
 
-      const storageRef = ref(storage, `banners/${bannerDoc.id}`);
+      const storageRef = ref(storage, `${collectionName}/${bannerDoc.id}`);
       const snapshot = await uploadBytes(storageRef, bannerImage);
       const imageUrl = await getDownloadURL(snapshot.ref);
 
-      await updateDoc(doc(db, 'banners', bannerDoc.id), { image: imageUrl });
+      await updateDoc(doc(db, collectionName, bannerDoc.id), { image: imageUrl });
 
       setAlert({ message: 'Banner adicionado com sucesso!', type: 'success' });
       setBannerLink('');
@@ -147,22 +181,39 @@ function BannerForm() {
       console.error('Erro ao adicionar banner: ', error);
       setAlert({ message: 'Erro ao adicionar banner.', type: 'error' });
     }
-  };
+  }, [bannerLink, bannerImage, collectionName]);
 
   return (
     <form onSubmit={handleSubmit}>
-      {alert.message && <div className={`alert ${alert.type === 'success' ? 'alert-success' : 'alert-error'}`}>{alert.message}</div>}
-      <InputField label="Link do Banner" value={bannerLink} onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setBannerLink(e.target.value)} />
+      {alert.message && (
+        <div className={`alert ${alert.type === 'success' ? 'alert-success' : 'alert-error'}`}>
+          {alert.message}
+        </div>
+      )}
+      <InputField
+        label="Link do Banner"
+        value={bannerLink}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBannerLink(e.target.value)}
+      />
       <div className="mb-4">
         <label className="block text-gray-700 text-sm font-bold mb-2">Imagem do Banner</label>
-        <div className="border-2 border-dashed border-gray-300 p-4 rounded-md h-auto flex items-center justify-center relative">
-          <input type="file" onChange={handleImageUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-          {previewImage ? <Image src={previewImage} alt="Preview" className="w-full h-24 object-cover rounded-md" /> : <span className="text-gray-400">Clique ou arraste para adicionar uma imagem</span>}
+        <div className="border-2 border-dashed border-gray-300 p-4 rounded-md flex items-center justify-center relative">
+          <input
+            type="file"
+            onChange={handleImageUpload}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
+          {previewImage
+            ? <Image src={previewImage} alt="Preview" width={100} height={100} className="w-full h-24 object-cover rounded-md" />
+            : <span className="text-gray-400">Clique ou arraste para adicionar uma imagem</span>
+          }
         </div>
       </div>
       <div className="flex items-center justify-end mt-4">
         <Button type="submit" variant="default" className="bg-green-500 hover:bg-green-600 text-white py-2 px-6 rounded-md">
-          Adicionar Banner
+          {collectionName === 'banners_principal'
+            ? 'Adicionar Banner Principal'
+            : 'Adicionar Banner Body'}
         </Button>
       </div>
     </form>

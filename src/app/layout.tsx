@@ -1,17 +1,24 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { AuthProvider } from "@/Configuracao/Context/AuthContext";
-import { CartProvider } from "@/Configuracao/Context/CartContext";
-import AnalyticsTracker from "../Configuracao/Firebase/AnalyticsTracker"; // Importa o componente de rastreamento
-import Script from "next/script";
+// src/app/layout.tsx
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import Script from 'next/script';
+import { AuthProvider } from '@/Configuracao/Context/AuthContext';
+import { CartProvider } from '@/Configuracao/Context/CartContext';
+import dynamic from 'next/dynamic';
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: "Lory's Modas",
   description: "Bem-vindo a Lory's Modas",
 };
+
+// AnalyticsTracker só roda no cliente, carregado dinamicamente
+const AnalyticsTracker = dynamic(
+  () => import('@/Configuracao/Firebase/AnalyticsTracker'),
+  { ssr: false }
+);
 
 export default function RootLayout({
   children,
@@ -22,29 +29,14 @@ export default function RootLayout({
     <html lang="pt-BR">
       <head>
         <Script
-          id="fb-pixel-script"
+          src="/scripts/fb-pixel.js"
           strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              !function(f,b,e,v,n,t,s)
-              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-              n.queue=[];t=b.createElement(e);t.async=!0;
-              t.src=v;s=b.getElementsByTagName(e)[0];
-              s.parentNode.insertBefore(t,s)}(window, document,'script',
-              'https://connect.facebook.net/en_US/fbevents.js');
-              fbq('init', '537943838759167');
-              fbq('track', 'PageView');
-            `,
-          }}
         />
-        {/* Código noscript para navegadores sem suporte a JavaScript */}
         <noscript>
           <img
             height="1"
             width="1"
-            style={{ display: "none" }}
+            style={{ display: 'none' }}
             src="https://www.facebook.com/tr?id=537943838759167&ev=PageView&noscript=1"
           />
         </noscript>
